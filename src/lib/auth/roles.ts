@@ -1,17 +1,17 @@
 import type { AppRole } from '#lib/supabase/database';
 
-export const roles = ['employee', 'admin', 'hr'] as const satisfies readonly AppRole[];
+export const roles = ['admin', 'payroll', 'user'] as const satisfies readonly AppRole[];
 
 export const roleLabels: Record<AppRole, string> = {
-	employee: 'Employee',
 	admin: 'Admin',
-	hr: 'HR'
+	payroll: 'Payroll',
+	user: 'User'
 };
 
 export const roleHomes: Record<AppRole, string> = {
-	employee: '/employee',
 	admin: '/admin',
-	hr: '/hr'
+	payroll: '/payroll',
+	user: '/user'
 };
 
 export function isAppRole(value: unknown): value is AppRole {

@@ -1,14 +1,7 @@
-<script lang="ts">
-	import RoleHome from '#lib/components/role-home.svelte';
-	import type { PageProps } from './$types';
-
-	let { data }: PageProps = $props();
-</script>
-
 <svelte:head>
-	<title>Admin · ElixirPay</title>
+	<title>Dashboard · ElixirPay</title>
 </svelte:head>
 
-{#if data.session}
-	<RoleHome role="admin" email={data.session.email} />
-{/if}
+<header>
+	<h1 class="text-foreground text-2xl font-medium">Dashboard</h1>
+</header>

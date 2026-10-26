@@ -8,22 +8,43 @@ export type Database = {
 		Tables: {
 			profiles: {
 				Row: {
+					casual_leave: number;
 					created_at: string;
+					designation: string;
+					earned_leave: number;
+					email: string;
 					id: string;
 					must_reset_password: boolean;
-					role: Database['public']['Enums']['app_role'];
+					reports_to: string | null;
+					role: Database['public']['Enums']['app_role'] | null;
+					sick_leave: number;
+					status: Database['public']['Enums']['access_status'];
 				};
 				Insert: {
+					casual_leave?: number;
 					created_at?: string;
+					designation?: string;
+					earned_leave?: number;
+					email?: string;
 					id: string;
 					must_reset_password?: boolean;
-					role: Database['public']['Enums']['app_role'];
+					reports_to?: string | null;
+					role?: Database['public']['Enums']['app_role'] | null;
+					sick_leave?: number;
+					status?: Database['public']['Enums']['access_status'];
 				};
 				Update: {
+					casual_leave?: number;
 					created_at?: string;
+					designation?: string;
+					earned_leave?: number;
+					email?: string;
 					id?: string;
 					must_reset_password?: boolean;
-					role?: Database['public']['Enums']['app_role'];
+					reports_to?: string | null;
+					role?: Database['public']['Enums']['app_role'] | null;
+					sick_leave?: number;
+					status?: Database['public']['Enums']['access_status'];
 				};
 				Relationships: [];
 			};
@@ -32,10 +53,22 @@ export type Database = {
 			[_ in never]: never;
 		};
 		Functions: {
-			[_ in never]: never;
+			approve_profile: {
+				Args: {
+					next_casual: number;
+					next_designation: string;
+					next_earned: number;
+					next_reports_to: string | null;
+					next_role: string;
+					next_sick: number;
+					target: string;
+				};
+				Returns: undefined;
+			};
 		};
 		Enums: {
-			app_role: 'employee' | 'admin' | 'hr';
+			access_status: 'pending' | 'approved';
+			app_role: 'admin' | 'payroll' | 'user';
 		};
 		CompositeTypes: {
 			[_ in never]: never;

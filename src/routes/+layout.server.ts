@@ -9,6 +9,7 @@ export const load: LayoutServerLoad = ({ locals }) => {
 		session: {
 			email: locals.claims.email ?? '',
 			role: locals.profile.role,
+			status: locals.profile.status,
 			mustResetPassword: locals.profile.mustResetPassword
 		}
 	};

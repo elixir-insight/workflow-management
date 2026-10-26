@@ -10,8 +10,6 @@ export type AuthClaims = {
 	email?: string;
 };
 
-const rolePaths = new Set<string>(Object.values(roleHomes));
-
 function readClaims(
 	claims: { sub?: unknown; email?: unknown } | null | undefined
 ): AuthClaims | null {
@@ -64,13 +62,14 @@ export const handle: Handle = async ({ event, resolve }) => {
 	if (event.locals.claims) {
 		const { data: profile, error } = await event.locals.supabase
 			.from('profiles')
-			.select('role, must_reset_password')
+			.select('role, status, must_reset_password')
 			.eq('id', event.locals.claims.sub)
 			.maybeSingle();
 
 		if (!error && profile) {
 			event.locals.profile = {
 				role: profile.role,
+				status: profile.status,
 				mustResetPassword: profile.must_reset_password
 			};
 		} else if (!error) {
@@ -87,14 +86,26 @@ export const handle: Handle = async ({ event, resolve }) => {
 			if (pathname !== '/' && pathname !== '/logout') {
 				redirect(303, '/');
 			}
+		} else if (profile.status === 'pending') {
+			if (pathname !== '/account/pending' && pathname !== '/logout') {
+				redirect(303, '/account/pending');
+			}
 		} else if (profile.mustResetPassword) {
 			if (pathname !== '/account/password' && pathname !== '/logout') {
 				redirect(303, '/account/password');
 			}
-		} else if (pathname === '/' || pathname === '/account/password') {
-			redirect(303, roleHomes[profile.role]);
-		} else if (rolePaths.has(pathname) && pathname !== roleHomes[profile.role]) {
-			redirect(303, roleHomes[profile.role]);
+		} else if (profile.role) {
+			const home = roleHomes[profile.role];
+			const onHome = profile.role === 'admin' ? pathname.startsWith('/admin') : pathname === home;
+
+			if (
+				pathname === '/' ||
+				pathname === '/account/password' ||
+				pathname === '/account/pending' ||
+				!onHome
+			) {
+				redirect(303, home);
+			}
 		}
 	}
 

@@ -4,6 +4,7 @@
 	import { Card, CardContent, CardDescription, CardHeader } from '#lib/components/ui/card';
 	import { Input } from '#lib/components/ui/input';
 	import { Label } from '#lib/components/ui/label';
+	import { accessContact } from '#lib/auth/access';
 	import logo from '#lib/assets/elixirpay-logo.png';
 	import Eye from '@lucide/svelte/icons/eye';
 	import EyeOff from '@lucide/svelte/icons/eye-off';
@@ -30,83 +31,98 @@
 			<p class="text-muted-foreground text-sm">Attendance</p>
 		</div>
 
-		<Card>
-			<CardHeader>
-				<h1 class="text-foreground text-2xl font-medium">Sign in</h1>
-				<CardDescription>Use your ElixirPay email.</CardDescription>
-			</CardHeader>
-			<CardContent>
-				<form
-					method="POST"
-					action="?/login"
-					class="flex flex-col gap-5"
-					use:enhance={() => {
-						submitting = true;
-						return async ({ update }) => {
-							try {
-								await update();
-							} finally {
-								submitting = false;
-							}
-						};
-					}}
-				>
-					<div class="flex flex-col gap-2">
-						<Label for="email">Email</Label>
-						<Input
-							id="email"
-							name="email"
-							type="email"
-							autocomplete="username"
-							inputmode="email"
-							autocapitalize="none"
-							spellcheck={false}
-							required
-							value={form?.email ?? ''}
-							aria-invalid={form?.error ? true : undefined}
-							aria-describedby={form?.error ? 'login-error' : undefined}
-							class="h-11"
-						/>
-					</div>
-
-					<div class="flex flex-col gap-2">
-						<Label for="password">Password</Label>
-						<div class="relative">
+		{#if form?.pending}
+			<Card>
+				<CardHeader>
+					<h1 class="text-foreground text-2xl font-medium">Profile under approval</h1>
+					<CardDescription>
+						Please contact
+						<a class="text-foreground underline" href="mailto:{accessContact}">{accessContact}</a>.
+					</CardDescription>
+				</CardHeader>
+			</Card>
+		{:else}
+			<Card>
+				<CardHeader>
+					<h1 class="text-foreground text-2xl font-medium">Sign in</h1>
+					<CardDescription>
+						Use an @elixirpay.in or @elixirglobal.com email. New accounts request access with the
+						temporary password.
+					</CardDescription>
+				</CardHeader>
+				<CardContent>
+					<form
+						method="POST"
+						action="?/login"
+						class="flex flex-col gap-5"
+						use:enhance={() => {
+							submitting = true;
+							return async ({ update }) => {
+								try {
+									await update();
+								} finally {
+									submitting = false;
+								}
+							};
+						}}
+					>
+						<div class="flex flex-col gap-2">
+							<Label for="email">Email</Label>
 							<Input
-								id="password"
-								name="password"
-								type={showPassword ? 'text' : 'password'}
-								autocomplete="current-password"
+								id="email"
+								name="email"
+								type="email"
+								autocomplete="username"
+								inputmode="email"
+								autocapitalize="none"
+								spellcheck={false}
 								required
+								value={form?.email ?? ''}
 								aria-invalid={form?.error ? true : undefined}
 								aria-describedby={form?.error ? 'login-error' : undefined}
-								class="h-11 pr-12"
+								class="h-11"
 							/>
-							<button
-								type="button"
-								class="text-foreground absolute inset-y-0 right-0 flex w-11 items-center justify-center"
-								aria-label={showPassword ? 'Hide password' : 'Show password'}
-								aria-pressed={showPassword}
-								onclick={() => (showPassword = !showPassword)}
-							>
-								{#if showPassword}
-									<EyeOff class="size-5" />
-								{:else}
-									<Eye class="size-5" />
-								{/if}
-							</button>
 						</div>
-					</div>
 
-					{#if form?.error}
-						<p id="login-error" role="alert" class="text-destructive text-sm">{form.error}</p>
-					{/if}
+						<div class="flex flex-col gap-2">
+							<Label for="password">Password</Label>
+							<div class="relative">
+								<Input
+									id="password"
+									name="password"
+									type={showPassword ? 'text' : 'password'}
+									autocomplete="current-password"
+									required
+									aria-invalid={form?.error ? true : undefined}
+									aria-describedby={form?.error ? 'login-error' : undefined}
+									class="h-11 pr-12"
+								/>
+								<button
+									type="button"
+									class="text-foreground absolute inset-y-0 right-0 flex w-11 items-center justify-center"
+									aria-label={showPassword ? 'Hide password' : 'Show password'}
+									aria-pressed={showPassword}
+									onclick={() => (showPassword = !showPassword)}
+								>
+									{#if showPassword}
+										<EyeOff class="size-5" />
+									{:else}
+										<Eye class="size-5" />
+									{/if}
+								</button>
+							</div>
+						</div>
 
-					<Button type="submit" class="h-11 w-full" disabled={submitting}>
-						{submitting ? 'Signing in…' : 'Sign in'}
-					</Button>
-				</form>
-			</CardContent>
-		</Card>
+						{#if form?.error}
+							<p id="login-error" role="alert" class="text-destructive text-sm">{form.error}</p>
+						{/if}
+
+						<Button type="submit" class="h-11 w-full" disabled={submitting}>
+							{submitting ? 'Signing in…' : 'Sign in'}
+						</Button>
+					</form>
+				</CardContent>
+			</Card>
+		{/if}
 	</div>
 </main>

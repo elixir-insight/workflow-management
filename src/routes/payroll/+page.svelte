@@ -6,9 +6,9 @@
 </script>
 
 <svelte:head>
-	<title>Employee · ElixirPay</title>
+	<title>Payroll · ElixirPay</title>
 </svelte:head>
 
 {#if data.session}
-	<RoleHome role="employee" email={data.session.email} />
+	<RoleHome role="payroll" email={data.session.email} />
 {/if}

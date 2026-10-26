@@ -39,7 +39,7 @@ export const actions = {
 			.eq('id', locals.claims.sub)
 			.maybeSingle();
 
-		if (profileError || !profile || profile.must_reset_password) {
+		if (profileError || !profile || profile.must_reset_password || !profile.role) {
 			return fail(400, { error: 'The password could not be changed. Try again.' });
 		}
 

@@ -10,7 +10,8 @@ declare global {
 				email?: string;
 			} | null;
 			profile: {
-				role: AppRole;
+				role: AppRole | null;
+				status: 'pending' | 'approved';
 				mustResetPassword: boolean;
 			} | null;
 		}
