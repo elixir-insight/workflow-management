@@ -1,0 +1,10 @@
+{
+    "cSpell.words": [
+        "Elixirpay",
+        "shadcn",
+        "supabase"
+    ],
+    "files.associations": {
+        "*.css": "tailwindcss"
+    }
+}

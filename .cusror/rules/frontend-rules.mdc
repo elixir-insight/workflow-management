@@ -11,6 +11,7 @@ alwaysApply: true
 - TypeScript
 - Tailwind CSS v4
 - shadcn-svelte
+- Lucide icons - https://lucide.dev/guide/ 
 
 ## Documentation First
 
@@ -58,6 +59,7 @@ If unsure about any API or syntax, check the official docs first before generati
 - If the user asks to create a custom component that already exists in shadcn-svelte, REFUSE and suggest the existing one.
 - Keep components small and reusable.
 - Separate UI from logic.
+- Also when using icons please use only Lucide icons
 
 ## TypeScript
 
