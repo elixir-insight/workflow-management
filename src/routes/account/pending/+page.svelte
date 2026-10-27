@@ -6,10 +6,12 @@
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
+
+	const denied = $derived(data.session?.status === 'denied');
 </script>
 
 <svelte:head>
-	<title>Profile under approval · ElixirPay</title>
+	<title>{denied ? 'Access denied' : 'Profile under approval'} · ElixirPay</title>
 </svelte:head>
 
 <main
@@ -25,7 +27,9 @@
 
 		<Card>
 			<CardHeader>
-				<h1 class="text-foreground text-2xl font-medium">Profile under approval</h1>
+				<h1 class="text-foreground text-2xl font-medium">
+					{denied ? 'Access denied' : 'Profile under approval'}
+				</h1>
 				<CardDescription>
 					Please contact
 					<a class="text-foreground underline" href="mailto:{accessContact}">{accessContact}</a>.

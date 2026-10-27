@@ -1,4 +1,4 @@
-import type { AppRole, Database } from '#lib/supabase/database';
+import type { AccessStatus, AppRole, Database } from '#lib/supabase/database';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 declare global {
@@ -11,8 +11,11 @@ declare global {
 			} | null;
 			profile: {
 				role: AppRole | null;
-				status: 'pending' | 'approved';
+				status: AccessStatus;
 				mustResetPassword: boolean;
+				firstName: string;
+				lastName: string;
+				avatarPath: string | null;
 			} | null;
 		}
 	}

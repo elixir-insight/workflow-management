@@ -10,5 +10,11 @@
 </svelte:head>
 
 {#if data.session}
-	<RoleHome role="payroll" email={data.session.email} />
+	<RoleHome
+		role="payroll"
+		email={data.session.email}
+		firstName={data.session.firstName}
+		lastName={data.session.lastName}
+		avatarUrl={data.session.avatarUrl}
+	/>
 {/if}

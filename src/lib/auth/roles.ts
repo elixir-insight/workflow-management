@@ -8,11 +8,11 @@ export const roleLabels: Record<AppRole, string> = {
 	user: 'User'
 };
 
-export const roleHomes: Record<AppRole, string> = {
+export const roleHomes = {
 	admin: '/admin',
 	payroll: '/payroll',
 	user: '/user'
-};
+} as const satisfies Record<AppRole, `/${string}`>;
 
 export function isAppRole(value: unknown): value is AppRole {
 	return typeof value === 'string' && roles.some((role) => role === value);

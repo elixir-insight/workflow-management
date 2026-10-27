@@ -1,6 +1,7 @@
 import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from '$app/env/private';
+import { isPlatformAdminEmail } from '#lib/auth/platform-admin';
 import { roleHomes } from '#lib/auth/roles';
-import type { Database } from '#lib/supabase/database';
+import type { AppRole, Database } from '#lib/supabase/database';
 import { createServerClient } from '@supabase/ssr';
 import { redirect } from '@sveltejs/kit';
 import type { Handle } from '@sveltejs/kit/hooks';
@@ -34,6 +35,31 @@ function isPageRequest(pathname: string) {
 	);
 }
 
+function isAllowedPath(role: AppRole | null, pathname: string, email?: string) {
+	if (pathname === '/logout' || pathname === '/profile' || pathname.startsWith('/profile/')) {
+		return true;
+	}
+
+	const onAttendance = pathname === '/attendance' || pathname.startsWith('/attendance/');
+	if (onAttendance) {
+		return Boolean(role) && !isPlatformAdminEmail(email);
+	}
+
+	if (role === 'admin') {
+		return pathname.startsWith('/admin');
+	}
+
+	if (role === 'payroll') {
+		return pathname === '/payroll' || pathname.startsWith('/admin/users');
+	}
+
+	if (role === 'user') {
+		return pathname === '/user' || pathname.startsWith('/user/');
+	}
+
+	return false;
+}
+
 export const handle: Handle = async ({ event, resolve }) => {
 	event.locals.supabase = createServerClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
 		cookies: {
@@ -62,7 +88,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 	if (event.locals.claims) {
 		const { data: profile, error } = await event.locals.supabase
 			.from('profiles')
-			.select('role, status, must_reset_password')
+			.select('role, status, must_reset_password, first_name, last_name, avatar_path')
 			.eq('id', event.locals.claims.sub)
 			.maybeSingle();
 
@@ -70,7 +96,10 @@ export const handle: Handle = async ({ event, resolve }) => {
 			event.locals.profile = {
 				role: profile.role,
 				status: profile.status,
-				mustResetPassword: profile.must_reset_password
+				mustResetPassword: profile.must_reset_password,
+				firstName: profile.first_name,
+				lastName: profile.last_name,
+				avatarPath: profile.avatar_path
 			};
 		} else if (!error) {
 			await event.locals.supabase.auth.signOut();
@@ -82,11 +111,15 @@ export const handle: Handle = async ({ event, resolve }) => {
 		const pathname = event.url.pathname;
 		const profile = event.locals.profile;
 
+		if (pathname === '/account/profile' || pathname.startsWith('/account/profile/')) {
+			redirect(303, '/profile');
+		}
+
 		if (!profile) {
 			if (pathname !== '/' && pathname !== '/logout') {
 				redirect(303, '/');
 			}
-		} else if (profile.status === 'pending') {
+		} else if (profile.status === 'pending' || profile.status === 'denied') {
 			if (pathname !== '/account/pending' && pathname !== '/logout') {
 				redirect(303, '/account/pending');
 			}
@@ -94,15 +127,15 @@ export const handle: Handle = async ({ event, resolve }) => {
 			if (pathname !== '/account/password' && pathname !== '/logout') {
 				redirect(303, '/account/password');
 			}
-		} else if (profile.role) {
+		} else if (profile.role && pathname !== '/logout') {
 			const home = roleHomes[profile.role];
-			const onHome = profile.role === 'admin' ? pathname.startsWith('/admin') : pathname === home;
+			const allowed = isAllowedPath(profile.role, pathname, event.locals.claims?.email);
 
 			if (
 				pathname === '/' ||
 				pathname === '/account/password' ||
 				pathname === '/account/pending' ||
-				!onHome
+				!allowed
 			) {
 				redirect(303, home);
 			}

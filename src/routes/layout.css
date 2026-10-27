@@ -1,5 +1,6 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
+@import 'shadcn-svelte/tailwind.css';
 
 @custom-variant dark (&:is(.dark *));
 
@@ -20,6 +21,9 @@
 	--accent-foreground: oklch(0.3012 0 0);
 	--destructive: oklch(0.5771 0.2152 27.325);
 	--destructive-foreground: oklch(1 0 0);
+	--success: oklch(0.62 0.14 145);
+	--amber: oklch(0.75 0.14 85);
+	--orange: oklch(0.7 0.16 55);
 	--border: oklch(0.8434 0.0231 87.1621);
 	--input: oklch(0.8434 0.0231 87.1621);
 	--ring: oklch(0.3012 0 0);
@@ -76,6 +80,9 @@
 	--accent-foreground: oklch(0.852 0.0205 100.6306);
 	--destructive: oklch(0.6368 0.2078 25.3313);
 	--destructive-foreground: oklch(1 0 0);
+	--success: oklch(0.72 0.15 145);
+	--amber: oklch(0.8 0.14 85);
+	--orange: oklch(0.76 0.15 55);
 	--border: oklch(0.2931 0 0);
 	--input: oklch(0.2931 0 0);
 	--ring: oklch(0.852 0.0205 100.6306);
@@ -130,6 +137,9 @@
 	--color-accent-foreground: var(--accent-foreground);
 	--color-destructive: var(--destructive);
 	--color-destructive-foreground: var(--destructive-foreground);
+	--color-success: var(--success);
+	--color-amber: var(--amber);
+	--color-orange: var(--orange);
 	--color-border: var(--border);
 	--color-input: var(--input);
 	--color-ring: var(--ring);

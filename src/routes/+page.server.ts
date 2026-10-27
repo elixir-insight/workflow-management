@@ -1,5 +1,6 @@
 import { isWorkEmail } from '#lib/auth/access';
 import { roleHomes } from '#lib/auth/roles';
+import { setFlash } from '#lib/server/flash';
 import { defaultPassword } from '#lib/server/password';
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions } from './$types';
@@ -13,7 +14,7 @@ function homeFor(role: 'admin' | 'payroll' | 'user' | null, mustResetPassword: b
 }
 
 export const actions = {
-	login: async ({ request, locals }) => {
+	login: async ({ request, cookies, locals }) => {
 		const formData = await request.formData();
 		const email = String(formData.get('email') ?? '')
 			.trim()
@@ -95,12 +96,30 @@ export const actions = {
 		}
 
 		if (profile.status === 'pending') {
+			setFlash(cookies, {
+				type: 'warning',
+				message: 'Signed in. Your access is still pending approval.'
+			});
 			redirect(303, '/account/pending');
 		}
 
-		redirect(
-			303,
-			homeFor(profile.role, password === defaultPassword || profile.must_reset_password)
-		);
+		if (profile.status === 'denied') {
+			setFlash(cookies, {
+				type: 'error',
+				message: 'Signed in, but access to ElixirPay attendance was denied.'
+			});
+			redirect(303, '/account/pending');
+		}
+
+		const needsPassword =
+			password === defaultPassword || Boolean(profile.must_reset_password);
+
+		setFlash(cookies, {
+			type: 'success',
+			message: needsPassword
+				? 'Signed in successfully. Set a new password to continue.'
+				: 'Signed in successfully.'
+		});
+		redirect(303, homeFor(profile.role, needsPassword));
 	}
 } satisfies Actions;

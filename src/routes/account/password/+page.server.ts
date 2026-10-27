@@ -1,10 +1,11 @@
-import { defaultPassword } from '#lib/server/password';
 import { roleHomes } from '#lib/auth/roles';
+import { setFlash } from '#lib/server/flash';
+import { defaultPassword } from '#lib/server/password';
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions } from './$types';
 
 export const actions = {
-	default: async ({ request, locals }) => {
+	default: async ({ request, cookies, locals }) => {
 		if (!locals.claims || !locals.profile) {
 			redirect(303, '/');
 		}
@@ -43,6 +44,7 @@ export const actions = {
 			return fail(400, { error: 'The password could not be changed. Try again.' });
 		}
 
+		setFlash(cookies, { type: 'success', message: 'Password updated.' });
 		redirect(303, roleHomes[profile.role]);
 	}
 } satisfies Actions;

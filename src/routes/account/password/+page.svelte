@@ -1,12 +1,13 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import logo from '#lib/assets/elixirpay-logo.png';
 	import { Button } from '#lib/components/ui/button';
 	import { Card, CardContent, CardDescription, CardHeader } from '#lib/components/ui/card';
 	import { Input } from '#lib/components/ui/input';
 	import { Label } from '#lib/components/ui/label';
-	import logo from '#lib/assets/elixirpay-logo.png';
 	import Eye from '@lucide/svelte/icons/eye';
 	import EyeOff from '@lucide/svelte/icons/eye-off';
+	import { toast } from 'svelte-sonner';
 	import type { PageProps } from './$types';
 
 	let { form }: PageProps = $props();
@@ -43,9 +44,15 @@
 					class="flex flex-col gap-5"
 					use:enhance={() => {
 						submitting = true;
-						return async ({ update }) => {
+						return async ({ result, update }) => {
 							try {
 								await update();
+								if (
+									result.type === 'failure' &&
+									typeof result.data?.error === 'string'
+								) {
+									toast.error(result.data.error);
+								}
 							} finally {
 								submitting = false;
 							}
