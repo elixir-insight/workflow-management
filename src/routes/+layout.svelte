@@ -13,6 +13,7 @@
 			!page.url.pathname.startsWith('/payroll') &&
 			!page.url.pathname.startsWith('/user') &&
 			!page.url.pathname.startsWith('/attendance') &&
+			!page.url.pathname.startsWith('/timesheet') &&
 			page.url.pathname !== '/profile'
 	);
 </script>

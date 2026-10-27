@@ -11,23 +11,25 @@
 	let menuOpen = $state(false);
 
 	const title = $derived(
-		page.url.pathname.startsWith('/attendance/approvals')
-			? 'Approvals'
-			: page.url.pathname.startsWith('/attendance/leave')
-				? 'Apply leave'
-				: page.url.pathname.startsWith('/attendance/wfh')
-					? 'WFH request'
-					: page.url.pathname.startsWith('/attendance')
-						? 'Attendance'
-						: page.url.pathname.startsWith('/profile')
-							? 'My profile'
-							: page.url.pathname.startsWith('/admin/users')
-								? 'User management'
-								: page.url.pathname.startsWith('/admin')
-									? 'Dashboard'
-									: page.url.pathname.startsWith('/payroll')
-										? 'Payroll'
-										: 'Home'
+		page.url.pathname.startsWith('/timesheet')
+			? 'Timesheet'
+			: page.url.pathname.startsWith('/attendance/approvals')
+				? 'Approvals'
+				: page.url.pathname.startsWith('/attendance/leave')
+					? 'Apply leave'
+					: page.url.pathname.startsWith('/attendance/wfh')
+						? 'WFH request'
+						: page.url.pathname.startsWith('/attendance')
+							? 'Attendance'
+							: page.url.pathname.startsWith('/profile')
+								? 'My profile'
+								: page.url.pathname.startsWith('/admin/users')
+									? 'User management'
+									: page.url.pathname.startsWith('/admin')
+										? 'Dashboard'
+										: page.url.pathname.startsWith('/payroll')
+											? 'Payroll'
+											: 'Home'
 	);
 
 	$effect(() => {

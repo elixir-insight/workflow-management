@@ -45,6 +45,11 @@ function isAllowedPath(role: AppRole | null, pathname: string, email?: string) {
 		return Boolean(role) && !isPlatformAdminEmail(email);
 	}
 
+	const onTimesheet = pathname === '/timesheet' || pathname.startsWith('/timesheet/');
+	if (onTimesheet) {
+		return role === 'admin' || role === 'payroll';
+	}
+
 	if (role === 'admin') {
 		return pathname.startsWith('/admin');
 	}

@@ -12,6 +12,7 @@
 	import type { AppRole } from '#lib/supabase/database';
 	import CalendarDays from '@lucide/svelte/icons/calendar-days';
 	import LayoutDashboard from '@lucide/svelte/icons/layout-dashboard';
+	import Table from '@lucide/svelte/icons/table';
 	import UserRound from '@lucide/svelte/icons/user-round';
 	import Users from '@lucide/svelte/icons/users';
 
@@ -34,6 +35,7 @@
 			| '/(app)/admin'
 			| '/(app)/admin/users'
 			| '/(app)/attendance'
+			| '/(app)/timesheet'
 			| '/(app)/payroll'
 			| '/(app)/user'
 			| '/(app)/profile';
@@ -73,13 +75,22 @@
 		}
 
 		if (role === 'admin' || role === 'payroll') {
-			items.push({
-				route: '/(app)/admin/users',
-				pathname: '/admin/users',
-				label: 'User management',
-				icon: Users,
-				exact: false
-			});
+			items.push(
+				{
+					route: '/(app)/admin/users',
+					pathname: '/admin/users',
+					label: 'User management',
+					icon: Users,
+					exact: false
+				},
+				{
+					route: '/(app)/timesheet',
+					pathname: '/timesheet',
+					label: 'Timesheet',
+					icon: Table,
+					exact: false
+				}
+			);
 		}
 
 		if (!isPlatformAdminEmail(email)) {
