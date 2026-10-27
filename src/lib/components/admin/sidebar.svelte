@@ -60,7 +60,7 @@
 			items.push({
 				route: '/(app)/payroll',
 				pathname: '/payroll',
-				label: 'Home',
+				label: 'Dashboard',
 				icon: LayoutDashboard,
 				exact: true
 			});
@@ -68,7 +68,7 @@
 			items.push({
 				route: '/(app)/user',
 				pathname: '/user',
-				label: 'Home',
+				label: 'Dashboard',
 				icon: LayoutDashboard,
 				exact: true
 			});

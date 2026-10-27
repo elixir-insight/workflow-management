@@ -28,8 +28,10 @@
 									: page.url.pathname.startsWith('/admin')
 										? 'Dashboard'
 										: page.url.pathname.startsWith('/payroll')
-											? 'Payroll'
-											: 'Home'
+											? 'Dashboard'
+											: page.url.pathname.startsWith('/user')
+												? 'Dashboard'
+												: 'Home'
 	);
 
 	$effect(() => {

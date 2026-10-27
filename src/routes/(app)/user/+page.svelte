@@ -1,20 +1,21 @@
 <script lang="ts">
-	import RoleHome from '#lib/components/role-home.svelte';
+	import UserDashboard from '#lib/components/dashboard/user-dashboard.svelte';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
 </script>
 
 <svelte:head>
-	<title>User · ElixirPay</title>
+	<title>Dashboard · ElixirPay</title>
 </svelte:head>
 
 {#if data.session}
-	<RoleHome
-		role="user"
+	<UserDashboard
+		data={data.dashboard}
 		email={data.session.email}
 		firstName={data.session.firstName}
 		lastName={data.session.lastName}
-		avatarUrl={data.session.avatarUrl}
 	/>
+{:else}
+	<UserDashboard data={data.dashboard} />
 {/if}

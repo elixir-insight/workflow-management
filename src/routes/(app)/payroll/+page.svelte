@@ -1,20 +1,12 @@
 <script lang="ts">
-	import RoleHome from '#lib/components/role-home.svelte';
+	import PayrollDashboard from '#lib/components/dashboard/payroll-dashboard.svelte';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
 </script>
 
 <svelte:head>
-	<title>Payroll · ElixirPay</title>
+	<title>Payroll dashboard · ElixirPay</title>
 </svelte:head>
 
-{#if data.session}
-	<RoleHome
-		role="payroll"
-		email={data.session.email}
-		firstName={data.session.firstName}
-		lastName={data.session.lastName}
-		avatarUrl={data.session.avatarUrl}
-	/>
-{/if}
+<PayrollDashboard data={data.dashboard} showAttendance={data.showAttendance} />
