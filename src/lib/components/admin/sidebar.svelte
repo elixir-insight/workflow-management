@@ -148,6 +148,7 @@
 			{@const current = isCurrent(link.pathname, link.exact)}
 			<a
 				href={resolve(link.route)}
+				data-sveltekit-preload-data="hover"
 				class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex h-10 items-center gap-3 rounded-lg px-3 text-sm font-medium transition-colors {current
 					? 'bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary hover:text-sidebar-primary-foreground'
 					: 'text-sidebar-foreground'}"

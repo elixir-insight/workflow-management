@@ -2,6 +2,7 @@
 	import { page } from '$app/state';
 	import favicon from '#lib/assets/favicon.svg';
 	import FlashToaster from '#lib/components/flash-toaster.svelte';
+	import NavProgress from '#lib/components/nav-progress.svelte';
 	import ThemeToggle from '#lib/components/theme-toggle.svelte';
 	import type { LayoutProps } from './$types';
 	import './layout.css';
@@ -22,6 +23,7 @@
 	<link rel="icon" href={favicon} />
 </svelte:head>
 
+<NavProgress />
 <FlashToaster flash={data.flash} />
 
 {#if showThemeToggle}
