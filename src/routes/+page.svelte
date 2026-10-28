@@ -47,8 +47,7 @@
 				<CardHeader>
 					<h1 class="text-foreground text-2xl font-medium">Sign in</h1>
 					<CardDescription>
-						Use an @elixirpay.in or @elixirglobal.com email. New accounts request access with the
-						temporary password.
+						New accounts request access with the temporary password.
 					</CardDescription>
 				</CardHeader>
 				<CardContent>
