@@ -1,3 +1,4 @@
+import { clockedHours, formatHours } from '#lib/attendance/hours';
 import { platformAdminEmail } from '#lib/auth/platform-admin';
 import type { Database, RequestStatus } from '#lib/supabase/database';
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -23,6 +24,14 @@ export type PersonalWfhRequest = {
 	reason: string;
 };
 
+export type PersonalDayHours = {
+	work_date: string;
+	in_time: string | null;
+	out_time: string | null;
+	hours: number | null;
+	hoursLabel: string;
+};
+
 export type PersonalDashboard = {
 	today: string;
 	profile: {
@@ -43,6 +52,7 @@ export type PersonalDashboard = {
 		in_time: string | null;
 		out_time: string | null;
 	} | null;
+	recentDays: PersonalDayHours[];
 	leaveRequests: PersonalLeaveRequest[];
 	wfhRequests: PersonalWfhRequest[];
 	pendingApprovals: number;
@@ -71,9 +81,16 @@ export async function loadPersonalDashboard(
 ): Promise<PersonalDashboard> {
 	const today = todayIso();
 
+	const recentFrom = (() => {
+		const date = new Date(`${today}T00:00:00Z`);
+		date.setUTCDate(date.getUTCDate() - 13);
+		return date.toISOString().slice(0, 10);
+	})();
+
 	const [
 		{ data: profile },
 		{ data: todayAttendance },
+		{ data: recentAttendance },
 		{ data: leaveRequests },
 		{ data: wfhRequests },
 		{ count: pendingLeaveCount },
@@ -93,6 +110,13 @@ export async function loadPersonalDashboard(
 			.eq('user_id', userId)
 			.eq('work_date', today)
 			.maybeSingle(),
+		supabase
+			.from('attendance_days')
+			.select('work_date, in_time, out_time')
+			.eq('user_id', userId)
+			.gte('work_date', recentFrom)
+			.lte('work_date', today)
+			.order('work_date', { ascending: false }),
 		supabase
 			.from('leave_requests')
 			.select('id, leave_kind, start_date, end_date, day_count, status, created_at, reason')
@@ -136,10 +160,22 @@ export async function loadPersonalDashboard(
 		avatar_path: null
 	};
 
+	const recentDays: PersonalDayHours[] = (recentAttendance ?? []).map((day) => {
+		const hours = clockedHours(day.in_time, day.out_time);
+		return {
+			work_date: day.work_date,
+			in_time: day.in_time,
+			out_time: day.out_time,
+			hours,
+			hoursLabel: formatHours(hours)
+		};
+	});
+
 	return {
 		today,
 		profile: resolvedProfile,
 		todayAttendance,
+		recentDays,
 		leaveRequests: leaveRequests ?? [],
 		wfhRequests: wfhRequests ?? [],
 		pendingApprovals: (pendingLeaveCount ?? 0) + (pendingWfhCount ?? 0),

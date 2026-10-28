@@ -259,6 +259,7 @@ export type Database = {
 					created_at: string;
 					decided_at: string | null;
 					decided_by: string | null;
+					email_body: string;
 					id: string;
 					reason: string;
 					status: Database['public']['Enums']['request_status'];
@@ -271,6 +272,7 @@ export type Database = {
 					created_at?: string;
 					decided_at?: string | null;
 					decided_by?: string | null;
+					email_body?: string;
 					id?: string;
 					reason?: string;
 					status?: Database['public']['Enums']['request_status'];
@@ -283,6 +285,7 @@ export type Database = {
 					created_at?: string;
 					decided_at?: string | null;
 					decided_by?: string | null;
+					email_body?: string;
 					id?: string;
 					reason?: string;
 					status?: Database['public']['Enums']['request_status'];
@@ -325,6 +328,7 @@ export type Database = {
 			};
 			apply_wfh_request: {
 				Args: {
+					next_email_body?: string;
 					next_reason: string;
 					next_work_date: string;
 				};
@@ -375,6 +379,8 @@ export type Database = {
 			update_my_profile: {
 				Args: {
 					next_avatar_path?: string | null;
+					next_designation?: string | null;
+					next_employee_id?: string | null;
 					next_first_name: string;
 					next_last_name: string;
 					next_phone: string;
@@ -394,7 +400,7 @@ export type Database = {
 		Enums: {
 			access_status: 'pending' | 'approved' | 'denied';
 			app_role: 'admin' | 'payroll' | 'user';
-			leave_kind: 'casual' | 'earned';
+			leave_kind: 'casual' | 'earned' | 'lop';
 			request_status: 'pending' | 'approved' | 'rejected';
 		};
 		CompositeTypes: {

@@ -187,7 +187,7 @@
 			<div class="min-w-0 flex-1">
 				<p class="text-sidebar-foreground truncate text-sm font-medium">{displayName}</p>
 				<p class="text-muted-foreground truncate text-xs">
-					{role ? roleLabels[role] : 'User'}
+					{role ? roleLabels[role] : 'Employee'}
 					{#if email}
 						· {email}
 					{/if}

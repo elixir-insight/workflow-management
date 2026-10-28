@@ -1,17 +1,42 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
+	import MailDraftDialog from '#lib/components/attendance/mail-draft-dialog.svelte';
 	import RequestStatusBadge from '#lib/components/attendance/request-status-badge.svelte';
 	import { Button } from '#lib/components/ui/button';
 	import { Card, CardContent, CardDescription, CardHeader } from '#lib/components/ui/card';
 	import { Input } from '#lib/components/ui/input';
 	import { Label } from '#lib/components/ui/label';
+	import { profileDisplayName } from '#lib/profile/display';
+	import Copy from '@lucide/svelte/icons/copy';
 	import { toast } from 'svelte-sonner';
 	import type { PageProps } from './$types';
 
 	let { data, form }: PageProps = $props();
 
 	let saving = $state(false);
+	let mailOpen = $state(Boolean(data.created?.email_body));
+
+	$effect(() => {
+		if (data.created?.email_body) {
+			mailOpen = true;
+		}
+	});
+
+	const managerLabel = $derived(
+		data.manager
+			? profileDisplayName(data.manager)
+			: 'Reporting Lead (placeholder — no manager mapped)'
+	);
+
+	async function copyEmail(body: string) {
+		try {
+			await navigator.clipboard.writeText(body);
+			toast.success('WFH mail copied to clipboard.');
+		} catch {
+			toast.error('Could not copy. Select the text and copy manually.');
+		}
+	}
 </script>
 
 <svelte:head>
@@ -30,8 +55,9 @@
 			<CardHeader>
 				<h2 class="text-foreground text-lg font-medium">Request WFH</h2>
 				<CardDescription>
+					One active WFH request per date.
 					{#if data.hasManager}
-						Needs approval from {data.managerEmail ?? 'your reporting lead'}.
+						Needs approval from {data.manager?.email ?? managerLabel}.
 					{:else}
 						No reporting lead mapped — this is captured immediately.
 					{/if}
@@ -79,6 +105,17 @@
 						>{form?.reason ?? ''}</textarea>
 					</div>
 
+					<p class="text-muted-foreground text-xs">
+						{#if data.manager}
+							Reporting lead: {managerLabel}
+							{#if data.manager.email}
+								· {data.manager.email}
+							{/if}
+						{:else}
+							No reporting lead — approval is not required. Mail To will use a placeholder.
+						{/if}
+					</p>
+
 					{#if form?.error}
 						<p role="alert" class="text-destructive text-sm">{form.error}</p>
 					{/if}
@@ -105,12 +142,27 @@
 				{:else}
 					<ul class="flex flex-col gap-3">
 						{#each data.requests as request (request.id)}
-							<li class="border-border flex items-start justify-between gap-3 rounded-lg border p-3">
-								<div class="min-w-0">
-									<p class="text-foreground text-sm font-medium">{request.work_date}</p>
-									<p class="text-muted-foreground text-sm">{request.reason}</p>
+							<li class="border-border rounded-lg border p-3">
+								<div class="flex items-start justify-between gap-3">
+									<div class="min-w-0">
+										<p class="text-foreground text-sm font-medium">{request.work_date}</p>
+										<p class="text-muted-foreground text-sm">{request.reason}</p>
+									</div>
+									<RequestStatusBadge status={request.status} />
 								</div>
-								<RequestStatusBadge status={request.status} />
+								{#if request.email_body}
+									<div class="mt-3 flex flex-wrap gap-2">
+										<Button
+											type="button"
+											variant="outline"
+											size="sm"
+											onclick={() => copyEmail(request.email_body)}
+										>
+											<Copy class="size-3.5" />
+											Copy mail
+										</Button>
+									</div>
+								{/if}
 							</li>
 						{/each}
 					</ul>
@@ -119,3 +171,15 @@
 		</Card>
 	</div>
 </div>
+
+{#if data.created?.email_body}
+	<MailDraftDialog
+		bind:open={mailOpen}
+		title="WFH mail draft"
+		description={data.manager
+			? `Send this to ${managerLabel}.`
+			: 'No reporting lead mapped — To uses a placeholder you can replace.'}
+		toAddress={data.mailTo}
+		body={data.created.email_body}
+	/>
+{/if}

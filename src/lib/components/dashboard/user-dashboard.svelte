@@ -34,6 +34,9 @@
 
 	const inValue = $derived(data.todayAttendance?.in_time?.slice(0, 5) ?? null);
 	const outValue = $derived(data.todayAttendance?.out_time?.slice(0, 5) ?? null);
+	const todayHours = $derived(
+		data.recentDays.find((day) => day.work_date === data.today)?.hoursLabel ?? '—'
+	);
 
 	const dayStatus = $derived(
 		inValue && outValue
@@ -87,12 +90,44 @@
 		</div>
 	</div>
 
-	<div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+	<div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
 		<Stat label="Casual leave" value={data.profile.casual_leave} hint="Days available" />
 		<Stat label="Earned leave" value={data.profile.earned_leave} hint="Days available" />
 		<Stat label="In today" value={inValue ?? '—'} hint={data.today} />
 		<Stat label="Out today" value={outValue ?? '—'} hint={data.today} />
+		<Stat label="Hours today" value={todayHours} hint="Clocked" />
 	</div>
+
+	<Card>
+		<CardHeader class="flex-row items-center justify-between gap-3 space-y-0">
+			<div>
+				<h2 class="text-foreground text-base font-medium">Daily hours</h2>
+				<CardDescription>Clocked time for the last 14 days.</CardDescription>
+			</div>
+			<Button href={resolve('/(app)/attendance')} variant="outline" size="sm">
+				Log times
+			</Button>
+		</CardHeader>
+		<CardContent>
+			{#if data.recentDays.length === 0}
+				<p class="text-muted-foreground text-sm">No attendance logged yet.</p>
+			{:else}
+				<ul class="divide-border divide-y">
+					{#each data.recentDays as day (day.work_date)}
+						<li class="flex items-center justify-between gap-3 py-2.5 first:pt-0 last:pb-0">
+							<div class="min-w-0">
+								<p class="text-foreground text-sm font-medium">{day.work_date}</p>
+								<p class="text-muted-foreground text-xs">
+									{(day.in_time?.slice(0, 5) ?? '—') + ' → ' + (day.out_time?.slice(0, 5) ?? '—')}
+								</p>
+							</div>
+							<p class="text-foreground text-sm font-medium tabular-nums">{day.hoursLabel}</p>
+						</li>
+					{/each}
+				</ul>
+			{/if}
+		</CardContent>
+	</Card>
 
 	{#if ownPending > 0 || data.pendingApprovals > 0}
 		<div class="grid gap-3 sm:grid-cols-2">
@@ -172,9 +207,8 @@
 							<li class="border-border flex items-start justify-between gap-3 rounded-lg border p-3">
 								<div class="min-w-0">
 									<p class="text-foreground text-sm font-medium capitalize">
-										{request.leave_kind} · {request.day_count} day{request.day_count === 1
-											? ''
-											: 's'}
+										{request.leave_kind === 'lop' ? 'LOP' : request.leave_kind} ·
+										{request.day_count} day{request.day_count === 1 ? '' : 's'}
 									</p>
 									<p class="text-muted-foreground text-xs">
 										{request.start_date}

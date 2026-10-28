@@ -5,7 +5,7 @@ export const roles = ['admin', 'payroll', 'user'] as const satisfies readonly Ap
 export const roleLabels: Record<AppRole, string> = {
 	admin: 'Admin',
 	payroll: 'Payroll',
-	user: 'User'
+	user: 'Employee'
 };
 
 export const roleHomes = {

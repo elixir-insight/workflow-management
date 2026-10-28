@@ -19,11 +19,18 @@ export type TimesheetWfhEntry = {
 	work_date: string;
 };
 
+export type TimesheetLopEntry = {
+	user_id: string;
+	start_date: string;
+	end_date: string;
+};
+
 export type TimesheetCell = {
 	inTime: string | null;
 	outTime: string | null;
 	label: string;
 	wfh: boolean;
+	lop: boolean;
 };
 
 export function monthBounds(month: string) {
@@ -61,24 +68,54 @@ export function formatClock(value: string | null | undefined) {
 	return value.slice(0, 5);
 }
 
-export function cellLabel(inTime: string | null, outTime: string | null, wfh = false) {
+export function cellLabel(
+	inTime: string | null,
+	outTime: string | null,
+	wfh = false,
+	lop = false
+) {
 	const times =
 		!inTime && !outTime ? '' : `${formatClock(inTime)}-${formatClock(outTime)}`;
-	if (wfh && times) return `${times} · WFH`;
-	if (wfh) return 'WFH';
+	const tags = [wfh ? 'WFH' : null, lop ? 'LOP' : null].filter(Boolean);
+	if (tags.length && times) return `${times} · ${tags.join(' · ')}`;
+	if (tags.length) return tags.join(' · ');
 	return times;
+}
+
+function expandLopDates(entries: TimesheetLopEntry[], days: string[]) {
+	const daySet = new Set(days);
+	const keys = new Set<string>();
+
+	for (const entry of entries) {
+		const start = new Date(`${entry.start_date}T00:00:00Z`);
+		const end = new Date(`${entry.end_date}T00:00:00Z`);
+		if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end < start) {
+			continue;
+		}
+
+		for (let cursor = new Date(start); cursor <= end; cursor.setUTCDate(cursor.getUTCDate() + 1)) {
+			const iso = cursor.toISOString().slice(0, 10);
+			if (daySet.has(iso)) {
+				keys.add(`${entry.user_id}:${iso}`);
+			}
+		}
+	}
+
+	return keys;
 }
 
 export function buildTimesheetMatrix(
 	employees: TimesheetEmployee[],
 	days: string[],
 	entries: TimesheetDayEntry[],
-	wfhEntries: TimesheetWfhEntry[] = []
+	wfhEntries: TimesheetWfhEntry[] = [],
+	lopEntries: TimesheetLopEntry[] = []
 ) {
 	const byUserDate = new Map<string, { inTime: string | null; outTime: string | null }>();
 	const wfhByUserDate = new Set(
 		wfhEntries.map((entry) => `${entry.user_id}:${entry.work_date}`)
 	);
+	const lopByUserDate = expandLopDates(lopEntries, days);
 
 	for (const entry of entries) {
 		byUserDate.set(`${entry.user_id}:${entry.work_date}`, {
@@ -93,6 +130,7 @@ export function buildTimesheetMatrix(
 			const key = `${employee.id}:${day}`;
 			const times = byUserDate.get(key);
 			const wfh = wfhByUserDate.has(key);
+			const lop = lopByUserDate.has(key);
 			const inTime = times?.inTime ?? null;
 			const outTime = times?.outTime ?? null;
 
@@ -100,7 +138,8 @@ export function buildTimesheetMatrix(
 				inTime,
 				outTime,
 				wfh,
-				label: cellLabel(inTime, outTime, wfh)
+				lop,
+				label: cellLabel(inTime, outTime, wfh, lop)
 			} satisfies TimesheetCell;
 		})
 	}));

@@ -10,16 +10,28 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 	const userId = locals.claims.sub;
 
+	type Applicant = {
+		id: string;
+		email: string;
+		first_name: string;
+		last_name: string;
+		employee_id: string | null;
+	};
+
 	const [{ data: leaveRows }, { data: wfhRows }, { count: reportCount }] = await Promise.all([
 		locals.supabase
 			.from('leave_requests')
-			.select('id, leave_kind, start_date, end_date, day_count, reason, status, created_at, user_id')
+			.select(
+				'id, leave_kind, start_date, end_date, day_count, reason, status, created_at, user_id, applicant:profiles!leave_requests_user_id_fkey(id, email, first_name, last_name, employee_id)'
+			)
 			.eq('approver_id', userId)
 			.eq('status', 'pending')
 			.order('created_at', { ascending: true }),
 		locals.supabase
 			.from('wfh_requests')
-			.select('id, work_date, reason, status, created_at, user_id')
+			.select(
+				'id, work_date, reason, status, created_at, user_id, applicant:profiles!wfh_requests_user_id_fkey(id, email, first_name, last_name, employee_id)'
+			)
 			.eq('approver_id', userId)
 			.eq('status', 'pending')
 			.order('created_at', { ascending: true }),
@@ -30,24 +42,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 			.eq('status', 'approved')
 	]);
 
-	const applicantIds = [
-		...new Set([
-			...(leaveRows ?? []).map((row) => row.user_id),
-			...(wfhRows ?? []).map((row) => row.user_id)
-		])
-	];
-
-	const { data: applicants } = applicantIds.length
-		? await locals.supabase
-				.from('profiles')
-				.select('id, email, first_name, last_name, employee_id')
-				.in('id', applicantIds)
-		: { data: [] as const };
-
-	const byId = new Map((applicants ?? []).map((person) => [person.id, person]));
-
 	const leaveRequests = (leaveRows ?? []).map((row) => {
-		const person = byId.get(row.user_id);
+		const person = (row.applicant as Applicant | null) ?? null;
 		return {
 			id: row.id,
 			leave_kind: row.leave_kind,
@@ -63,7 +59,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 	});
 
 	const wfhRequests = (wfhRows ?? []).map((row) => {
-		const person = byId.get(row.user_id);
+		const person = (row.applicant as Applicant | null) ?? null;
 		return {
 			id: row.id,
 			work_date: row.work_date,

@@ -79,11 +79,12 @@ export const actions = {
 				return fail(400, { error: 'Use a JPG, PNG, WebP, or GIF image.' });
 			}
 
-			const path = `${userId}/avatar.${extension}`;
+			// Unique path so browsers/CDN don't keep showing the previous photo.
+			const path = `${userId}/avatar-${Date.now()}.${extension}`;
 			const { error: uploadError } = await locals.supabase.storage
 				.from('avatars')
 				.upload(path, avatarFile, {
-					upsert: true,
+					upsert: false,
 					contentType: avatarFile.type,
 					cacheControl: '3600'
 				});
@@ -92,7 +93,7 @@ export const actions = {
 				return fail(400, { error: 'Avatar could not be uploaded.' });
 			}
 
-			if (current.avatar_path && current.avatar_path !== path) {
+			if (current.avatar_path) {
 				await locals.supabase.storage.from('avatars').remove([current.avatar_path]);
 			}
 
@@ -104,11 +105,16 @@ export const actions = {
 			next_last_name: parsed.lastName,
 			next_phone: parsed.phone,
 			next_present_address: parsed.presentAddress,
-			next_avatar_path: nextAvatarPath
+			next_avatar_path: nextAvatarPath,
+			next_employee_id: parsed.employeeId ?? '',
+			next_designation: parsed.designation
 		});
 
 		if (saveError) {
-			return fail(400, { error: 'Those details could not be saved.' });
+			const message = saveError.message?.includes('employee id already in use')
+				? 'That employee ID is already used by someone else.'
+				: 'Those details could not be saved.';
+			return fail(400, { error: message });
 		}
 
 		setFlash(cookies, { type: 'success', message: 'Profile updated.' });

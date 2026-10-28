@@ -135,6 +135,10 @@
 							await update();
 							if (result.type === 'failure' && typeof result.data?.error === 'string') {
 								toast.error(result.data.error);
+							} else if (result.type === 'success' || result.type === 'redirect') {
+								clearPreview();
+								removeAvatar = false;
+								if (fileInput) fileInput.value = '';
 							}
 						} finally {
 							saving = false;
@@ -232,6 +236,29 @@
 					</div>
 				</div>
 
+				<div class="grid gap-4 sm:grid-cols-2">
+					<div class="flex flex-col gap-2">
+						<Label for="employeeId">Employee ID</Label>
+						<Input
+							id="employeeId"
+							name="employeeId"
+							value={data.profile.employee_id ?? ''}
+							placeholder="Optional"
+							class="h-11"
+						/>
+					</div>
+					<div class="flex flex-col gap-2">
+						<Label for="designation">Designation</Label>
+						<Input
+							id="designation"
+							name="designation"
+							value={data.profile.designation}
+							placeholder="e.g. Engineer"
+							class="h-11"
+						/>
+					</div>
+				</div>
+
 				<div class="flex flex-col gap-2">
 					<Label for="phone">Phone number</Label>
 					<Input
@@ -253,12 +280,6 @@
 						class="border-input bg-background text-foreground focus-visible:border-ring focus-visible:ring-ring/50 w-full rounded-lg border px-2.5 py-2 text-base outline-none focus-visible:ring-3 md:text-sm"
 					>{data.profile.present_address}</textarea>
 				</div>
-
-				{#if data.profile.designation}
-					<p class="text-muted-foreground text-sm">
-						Designation: <span class="text-foreground">{data.profile.designation}</span>
-					</p>
-				{/if}
 
 				{#if form?.error}
 					<p role="alert" class="text-destructive text-sm">{form.error}</p>

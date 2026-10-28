@@ -5,6 +5,7 @@ import {
 	timesheetToCsv,
 	type TimesheetDayEntry,
 	type TimesheetEmployee,
+	type TimesheetLopEntry,
 	type TimesheetWfhEntry
 } from '#lib/attendance/timesheet';
 import { error } from '@sveltejs/kit';
@@ -56,34 +57,47 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 
 	let entries: TimesheetDayEntry[] = [];
 	let wfhEntries: TimesheetWfhEntry[] = [];
+	let lopEntries: TimesheetLopEntry[] = [];
 
 	if (employeeIds.length > 0) {
-		const [{ data: attendance, error: attendanceError }, { data: wfhRows, error: wfhError }] =
-			await Promise.all([
-				locals.supabase
-					.from('attendance_days')
-					.select('user_id, work_date, in_time, out_time')
-					.in('user_id', employeeIds)
-					.gte('work_date', bounds.startDate)
-					.lte('work_date', bounds.endDate),
-				locals.supabase
-					.from('wfh_requests')
-					.select('user_id, work_date')
-					.in('user_id', employeeIds)
-					.eq('status', 'approved')
-					.gte('work_date', bounds.startDate)
-					.lte('work_date', bounds.endDate)
-			]);
+		const [
+			{ data: attendance, error: attendanceError },
+			{ data: wfhRows, error: wfhError },
+			{ data: lopRows, error: lopError }
+		] = await Promise.all([
+			locals.supabase
+				.from('attendance_days')
+				.select('user_id, work_date, in_time, out_time')
+				.in('user_id', employeeIds)
+				.gte('work_date', bounds.startDate)
+				.lte('work_date', bounds.endDate),
+			locals.supabase
+				.from('wfh_requests')
+				.select('user_id, work_date')
+				.in('user_id', employeeIds)
+				.eq('status', 'approved')
+				.gte('work_date', bounds.startDate)
+				.lte('work_date', bounds.endDate),
+			locals.supabase
+				.from('leave_requests')
+				.select('user_id, start_date, end_date')
+				.in('user_id', employeeIds)
+				.eq('status', 'approved')
+				.eq('leave_kind', 'lop')
+				.lte('start_date', bounds.endDate)
+				.gte('end_date', bounds.startDate)
+		]);
 
-		if (attendanceError || wfhError) {
+		if (attendanceError || wfhError || lopError) {
 			error(500, 'Timesheet data could not be loaded.');
 		}
 
 		entries = (attendance ?? []) as TimesheetDayEntry[];
 		wfhEntries = (wfhRows ?? []) as TimesheetWfhEntry[];
+		lopEntries = (lopRows ?? []) as TimesheetLopEntry[];
 	}
 
-	const rows = buildTimesheetMatrix(people, bounds.days, entries, wfhEntries);
+	const rows = buildTimesheetMatrix(people, bounds.days, entries, wfhEntries, lopEntries);
 	const safeName = vertical.name.replace(/[^\w.-]+/g, '_');
 	const filename = `timesheet_${safeName}_${month}`;
 	const body = timesheetToCsv(vertical.name, month, bounds.days, rows);

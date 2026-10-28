@@ -1,4 +1,4 @@
-import { buildLeaveEmail, inclusiveDayCount } from '#lib/attendance/email';
+import { buildLeaveEmail, inclusiveDayCount, type LeaveKindEmail } from '#lib/attendance/email';
 import { setFlash } from '#lib/server/flash';
 import { error, fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
@@ -56,26 +56,40 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		me,
 		manager,
 		requests: requests ?? [],
-		created
+		created,
+		mailTo: manager?.email?.trim() || '[reporting-lead@company.com]'
 	};
 };
+
+function resolveLeaveKind(
+	leaveKind: LeaveKindEmail,
+	dayCount: number,
+	casualLeave: number,
+	earnedLeave: number
+): LeaveKindEmail {
+	if (leaveKind === 'lop') return 'lop';
+	const balance = leaveKind === 'casual' ? casualLeave : earnedLeave;
+	return balance < dayCount ? 'lop' : leaveKind;
+}
 
 export const actions = {
 	apply: async ({ request, cookies, locals }) => {
 		const formData = await request.formData();
-		const leaveKind = String(formData.get('leaveKind') ?? '');
+		const leaveKindRaw = String(formData.get('leaveKind') ?? '');
 		const startDate = String(formData.get('startDate') ?? '').trim();
 		const endDate = String(formData.get('endDate') ?? '').trim();
 		const reason = String(formData.get('reason') ?? '').trim();
-		const values = { leaveKind, startDate, endDate, reason };
+		const values = { leaveKind: leaveKindRaw, startDate, endDate, reason };
 
 		if (!locals.claims || !locals.profile || locals.profile.status !== 'approved') {
 			return fail(401, { error: 'Sign in required.', ...values });
 		}
 
-		if (leaveKind !== 'casual' && leaveKind !== 'earned') {
+		if (leaveKindRaw !== 'casual' && leaveKindRaw !== 'earned' && leaveKindRaw !== 'lop') {
 			return fail(400, { error: 'Choose casual or earned leave.', ...values });
 		}
+
+		const leaveKind = leaveKindRaw as LeaveKindEmail;
 
 		if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate) || !/^\d{4}-\d{2}-\d{2}$/.test(endDate)) {
 			return fail(400, { error: 'Enter valid leave dates.', ...values });
@@ -105,13 +119,12 @@ export const actions = {
 			return fail(400, { error: 'Your profile could not be loaded.', ...values });
 		}
 
-		const balance = leaveKind === 'casual' ? me.casual_leave : me.earned_leave;
-		if (balance < dayCount) {
-			return fail(400, {
-				error: `Not enough ${leaveKind} leave. Available: ${balance}.`,
-				...values
-			});
-		}
+		const resolvedKind = resolveLeaveKind(
+			leaveKind,
+			dayCount,
+			me.casual_leave,
+			me.earned_leave
+		);
 
 		let manager: {
 			email: string;
@@ -131,7 +144,8 @@ export const actions = {
 		const email = buildLeaveEmail({
 			applicant: me,
 			manager,
-			leaveKind,
+			leaveKind: resolvedKind,
+			requestedKind: leaveKind,
 			startDate,
 			endDate,
 			dayCount,
@@ -148,19 +162,21 @@ export const actions = {
 		});
 
 		if (applyError || !requestId) {
-			return fail(400, {
-				error: applyError?.message?.includes('insufficient')
-					? 'Not enough leave balance for this request.'
-					: 'The leave request could not be submitted.',
-				...values
-			});
+			const raw = applyError?.message ?? '';
+			const message = raw.includes('overlapping leave')
+				? 'You already have leave covering these dates.'
+				: 'The leave request could not be submitted.';
+			return fail(400, { error: message, ...values });
 		}
 
 		setFlash(cookies, {
 			type: 'success',
-			message: manager
-				? 'Leave submitted. Copy the mail draft and send it to your reporting lead.'
-				: 'Leave captured immediately — no reporting lead is mapped.'
+			message:
+				resolvedKind === 'lop' && leaveKind !== 'lop'
+					? 'Leave submitted as LOP (insufficient balance). Copy the mail draft below.'
+					: manager
+						? 'Leave submitted. Copy the mail draft and send it to your reporting lead.'
+						: 'Leave recorded. Copy the mail draft if you still want to notify someone.'
 		});
 		redirect(303, `/attendance/leave?created=${requestId}`);
 	}

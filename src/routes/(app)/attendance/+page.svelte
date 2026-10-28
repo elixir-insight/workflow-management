@@ -4,8 +4,8 @@
 	import RequestStatusBadge from '#lib/components/attendance/request-status-badge.svelte';
 	import { Button } from '#lib/components/ui/button';
 	import { Card, CardContent, CardDescription, CardHeader } from '#lib/components/ui/card';
-	import { Input } from '#lib/components/ui/input';
 	import { Label } from '#lib/components/ui/label';
+	import TimeInput from '#lib/components/ui/time-input.svelte';
 	import CalendarDays from '@lucide/svelte/icons/calendar-days';
 	import ClipboardCheck from '@lucide/svelte/icons/clipboard-check';
 	import House from '@lucide/svelte/icons/house';
@@ -103,11 +103,11 @@
 					<div class="grid grid-cols-2 gap-3">
 						<div class="flex flex-col gap-2">
 							<Label for="inTime">In time</Label>
-							<Input id="inTime" name="inTime" type="time" value={inValue} class="h-11" />
+							<TimeInput id="inTime" name="inTime" value={inValue} />
 						</div>
 						<div class="flex flex-col gap-2">
 							<Label for="outTime">Out time</Label>
-							<Input id="outTime" name="outTime" type="time" value={outValue} class="h-11" />
+							<TimeInput id="outTime" name="outTime" value={outValue} />
 						</div>
 					</div>
 					{#if form?.times && form?.error}
@@ -139,9 +139,8 @@
 							<li class="border-border flex items-start justify-between gap-3 rounded-lg border p-3">
 								<div class="min-w-0">
 									<p class="text-foreground text-sm font-medium capitalize">
-										{request.leave_kind} · {request.day_count} day{request.day_count === 1
-											? ''
-											: 's'}
+										{request.leave_kind === 'lop' ? 'LOP' : request.leave_kind} ·
+										{request.day_count} day{request.day_count === 1 ? '' : 's'}
 									</p>
 									<p class="text-muted-foreground text-xs">
 										{request.start_date}

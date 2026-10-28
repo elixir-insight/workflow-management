@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
+	import MailDraftDialog from '#lib/components/attendance/mail-draft-dialog.svelte';
 	import RequestStatusBadge from '#lib/components/attendance/request-status-badge.svelte';
 	import { Button } from '#lib/components/ui/button';
 	import { Card, CardContent, CardDescription, CardHeader } from '#lib/components/ui/card';
@@ -14,7 +15,13 @@
 	let { data, form }: PageProps = $props();
 
 	let saving = $state(false);
-	let copied = $state(false);
+	let mailOpen = $state(Boolean(data.created?.email_body));
+
+	$effect(() => {
+		if (data.created?.email_body) {
+			mailOpen = true;
+		}
+	});
 
 	const managerLabel = $derived(
 		data.manager
@@ -28,9 +35,7 @@
 	async function copyEmail(body: string) {
 		try {
 			await navigator.clipboard.writeText(body);
-			copied = true;
 			toast.success('Leave mail copied to clipboard.');
-			setTimeout(() => (copied = false), 2000);
 		} catch {
 			toast.error('Could not copy. Select the text and copy manually.');
 		}
@@ -48,49 +53,13 @@
 		<span class="text-foreground">Leave</span>
 	</nav>
 
-	{#if data.created}
-		<Card>
-			<CardHeader>
-				{#if data.manager}
-					<h2 class="text-foreground text-lg font-medium">Mail draft ready</h2>
-					<CardDescription>
-						Leave is pending approval from {managerLabel}
-						{#if data.manager.email}
-							({data.manager.email})
-						{/if}. Copy this and send it to them.
-					</CardDescription>
-				{:else}
-					<h2 class="text-foreground text-lg font-medium">Leave recorded</h2>
-					<CardDescription>
-						No reporting lead is mapped, so this leave was approved immediately and deducted from
-						your balance.
-					</CardDescription>
-				{/if}
-			</CardHeader>
-			{#if data.manager && data.created.email_body}
-				<CardContent class="flex flex-col gap-3">
-					<pre
-						class="border-border bg-muted/40 text-foreground max-h-80 overflow-auto rounded-lg border p-3 text-sm whitespace-pre-wrap"
-					>{data.created.email_body}</pre>
-					<Button
-						type="button"
-						class="h-10 w-full sm:w-auto"
-						onclick={() => copyEmail(data.created?.email_body ?? '')}
-					>
-						<Copy class="size-4" />
-						{copied ? 'Copied' : 'Copy mail text'}
-					</Button>
-				</CardContent>
-			{/if}
-		</Card>
-	{/if}
-
 	<div class="grid gap-6 lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)]">
 		<Card>
 			<CardHeader>
 				<h2 class="text-foreground text-lg font-medium">Apply for leave</h2>
 				<CardDescription>
-					Balances — casual {data.me.casual_leave}, earned {data.me.earned_leave}.
+					Balances — casual {data.me.casual_leave}, earned {data.me.earned_leave}. If balance is
+					short, the request is saved as LOP.
 					{#if data.manager}
 						Needs approval from {managerLabel}.
 					{:else}
@@ -174,7 +143,7 @@
 								· {data.manager.email}
 							{/if}
 						{:else}
-							No reporting lead — approval is not required.
+							No reporting lead — approval is not required. Mail To will use a placeholder.
 						{/if}
 					</p>
 
@@ -207,10 +176,9 @@
 							<li class="border-border rounded-lg border p-3">
 								<div class="flex items-start justify-between gap-3">
 									<div class="min-w-0">
-										<p class="text-foreground text-sm font-medium capitalize">
-											{request.leave_kind} · {request.day_count} day{request.day_count === 1
-												? ''
-												: 's'}
+										<p class="text-foreground text-sm font-medium">
+											{request.leave_kind === 'lop' ? 'LOP' : request.leave_kind} ·
+											{request.day_count} day{request.day_count === 1 ? '' : 's'}
 										</p>
 										<p class="text-muted-foreground text-xs">
 											{request.start_date}
@@ -243,3 +211,15 @@
 		</Card>
 	</div>
 </div>
+
+{#if data.created?.email_body}
+	<MailDraftDialog
+		bind:open={mailOpen}
+		title="Leave mail draft"
+		description={data.manager
+			? `Send this to ${managerLabel}.`
+			: 'No reporting lead mapped — To uses a placeholder you can replace.'}
+		toAddress={data.mailTo}
+		body={data.created.email_body}
+	/>
+{/if}

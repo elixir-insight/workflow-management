@@ -5,6 +5,7 @@ import {
 	monthBounds,
 	type TimesheetDayEntry,
 	type TimesheetEmployee,
+	type TimesheetLopEntry,
 	type TimesheetWfhEntry
 } from '#lib/attendance/timesheet';
 import { profileDisplayName } from '#lib/profile/display';
@@ -74,24 +75,36 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 
 	let entries: TimesheetDayEntry[] = [];
 	let wfhEntries: TimesheetWfhEntry[] = [];
+	let lopEntries: TimesheetLopEntry[] = [];
 
 	if (employeeIds.length > 0) {
-		const [{ data: attendance, error: attendanceError }, { data: wfhRows, error: wfhError }] =
-			await Promise.all([
-				locals.supabase
-					.from('attendance_days')
-					.select('user_id, work_date, in_time, out_time')
-					.in('user_id', employeeIds)
-					.gte('work_date', bounds.startDate)
-					.lte('work_date', bounds.endDate),
-				locals.supabase
-					.from('wfh_requests')
-					.select('user_id, work_date')
-					.in('user_id', employeeIds)
-					.eq('status', 'approved')
-					.gte('work_date', bounds.startDate)
-					.lte('work_date', bounds.endDate)
-			]);
+		const [
+			{ data: attendance, error: attendanceError },
+			{ data: wfhRows, error: wfhError },
+			{ data: lopRows, error: lopError }
+		] = await Promise.all([
+			locals.supabase
+				.from('attendance_days')
+				.select('user_id, work_date, in_time, out_time')
+				.in('user_id', employeeIds)
+				.gte('work_date', bounds.startDate)
+				.lte('work_date', bounds.endDate),
+			locals.supabase
+				.from('wfh_requests')
+				.select('user_id, work_date')
+				.in('user_id', employeeIds)
+				.eq('status', 'approved')
+				.gte('work_date', bounds.startDate)
+				.lte('work_date', bounds.endDate),
+			locals.supabase
+				.from('leave_requests')
+				.select('user_id, start_date, end_date')
+				.in('user_id', employeeIds)
+				.eq('status', 'approved')
+				.eq('leave_kind', 'lop')
+				.lte('start_date', bounds.endDate)
+				.gte('end_date', bounds.startDate)
+		]);
 
 		if (attendanceError) {
 			error(500, 'Attendance times could not be loaded.');
@@ -101,11 +114,22 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 			error(500, 'WFH data could not be loaded.');
 		}
 
+		if (lopError) {
+			error(500, 'LOP leave data could not be loaded.');
+		}
+
 		entries = (attendance ?? []) as TimesheetDayEntry[];
 		wfhEntries = (wfhRows ?? []) as TimesheetWfhEntry[];
+		lopEntries = (lopRows ?? []) as TimesheetLopEntry[];
 	}
 
-	const rows = buildTimesheetMatrix(people, bounds.days, entries, wfhEntries).map((row) => ({
+	const rows = buildTimesheetMatrix(
+		people,
+		bounds.days,
+		entries,
+		wfhEntries,
+		lopEntries
+	).map((row) => ({
 		...row,
 		displayName: profileDisplayName(row.employee)
 	}));

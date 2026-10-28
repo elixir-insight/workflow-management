@@ -62,9 +62,8 @@
 										{/if}
 									</p>
 									<p class="text-foreground mt-2 text-sm capitalize">
-										{request.leave_kind} · {request.day_count} day{request.day_count === 1
-											? ''
-											: 's'}
+										{request.leave_kind === 'lop' ? 'LOP' : request.leave_kind} ·
+										{request.day_count} day{request.day_count === 1 ? '' : 's'}
 									</p>
 									<p class="text-muted-foreground text-xs">
 										{request.start_date}
