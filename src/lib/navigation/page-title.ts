@@ -5,6 +5,7 @@ export function pageTitleForPath(pathname: string) {
 	if (pathname.startsWith('/attendance/wfh')) return 'WFH request';
 	if (pathname.startsWith('/attendance')) return 'Attendance';
 	if (pathname.startsWith('/profile')) return 'My profile';
+	if (pathname.startsWith('/admin/logs')) return 'Logs';
 	if (pathname.startsWith('/admin/users')) return 'User management';
 	if (pathname.startsWith('/admin')) return 'Dashboard';
 	if (pathname.startsWith('/payroll')) return 'Dashboard';

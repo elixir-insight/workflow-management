@@ -44,6 +44,53 @@ export type Database = {
 					}
 				];
 			};
+			audit_logs: {
+				Row: {
+					action: string;
+					actor_email: string;
+					actor_id: string | null;
+					changes: Json;
+					created_at: string;
+					entity_id: string | null;
+					entity_label: string;
+					entity_type: string;
+					id: string;
+					summary: string;
+				};
+				Insert: {
+					action: string;
+					actor_email?: string;
+					actor_id?: string | null;
+					changes?: Json;
+					created_at?: string;
+					entity_id?: string | null;
+					entity_label?: string;
+					entity_type: string;
+					id?: string;
+					summary: string;
+				};
+				Update: {
+					action?: string;
+					actor_email?: string;
+					actor_id?: string | null;
+					changes?: Json;
+					created_at?: string;
+					entity_id?: string | null;
+					entity_label?: string;
+					entity_type?: string;
+					id?: string;
+					summary?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: 'audit_logs_actor_id_fkey';
+						columns: ['actor_id'];
+						isOneToOne: false;
+						referencedRelation: 'profiles';
+						referencedColumns: ['id'];
+					}
+				];
+			};
 			leave_requests: {
 				Row: {
 					approver_id: string | null;
@@ -297,6 +344,12 @@ export type Database = {
 				};
 				Returns: undefined;
 			};
+			delete_user: {
+				Args: {
+					target: string;
+				};
+				Returns: undefined;
+			};
 			manage_profile: {
 				Args: {
 					next_casual: number | null;
@@ -307,6 +360,14 @@ export type Database = {
 					next_role: string | null;
 					next_status: string;
 					next_vertical_id: string | null;
+					target: string;
+				};
+				Returns: undefined;
+			};
+			update_leave_balances: {
+				Args: {
+					next_casual: number;
+					next_earned: number;
 					target: string;
 				};
 				Returns: undefined;

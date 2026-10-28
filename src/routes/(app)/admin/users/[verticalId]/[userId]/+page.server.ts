@@ -1,10 +1,22 @@
 import { isPlatformAdminEmail, platformAdminEmail } from '#lib/auth/platform-admin';
 import { setFlash } from '#lib/server/flash';
-import { readProfileForm } from '#lib/server/profile-form';
+import { leaveBalance, readProfileForm } from '#lib/server/profile-form';
 import { error, fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, params }) => {
+	if (!locals.claims || !locals.profile || locals.profile.status !== 'approved') {
+		error(401, 'Sign in required');
+	}
+
+	const canEditAll = locals.profile.role === 'admin';
+	const canEditLeave =
+		locals.profile.role === 'admin' || locals.profile.role === 'payroll';
+
+	if (!canEditLeave) {
+		error(403, 'Not allowed');
+	}
+
 	const [{ data: profile, error: profileError }, { data: verticals }, { data: managers }] =
 		await Promise.all([
 			locals.supabase
@@ -50,28 +62,62 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 		vertical,
 		profile,
 		verticals: verticals ?? [],
-		managers: managers ?? []
+		managers: managers ?? [],
+		canEditAll,
+		canDelete: canEditAll
 	};
 };
 
 export const actions = {
 	save: async ({ request, cookies, locals }) => {
+		if (!locals.claims || !locals.profile || locals.profile.status !== 'approved') {
+			return fail(401, { error: 'Sign in required.' });
+		}
+
 		const formData = await request.formData();
 		const target = String(formData.get('id') ?? '');
-		const parsed = readProfileForm(formData);
-
-		if ('error' in parsed) {
-			return fail(400, { error: parsed.error });
-		}
 
 		const { data: targetProfile } = await locals.supabase
 			.from('profiles')
-			.select('email')
+			.select('email, vertical_id')
 			.eq('id', target)
 			.maybeSingle();
 
 		if (!targetProfile || isPlatformAdminEmail(targetProfile.email)) {
 			return fail(404, { error: 'Person not found' });
+		}
+
+		if (locals.profile.role === 'payroll') {
+			const casualLeave = leaveBalance(formData.get('casualLeave'));
+			const earnedLeave = leaveBalance(formData.get('earnedLeave'));
+
+			if (casualLeave === null || earnedLeave === null) {
+				return fail(400, { error: 'Enter valid leave balances.' });
+			}
+
+			const { error: saveError } = await locals.supabase.rpc('update_leave_balances', {
+				target,
+				next_casual: casualLeave,
+				next_earned: earnedLeave
+			});
+
+			if (saveError) {
+				return fail(400, { error: 'Leave balances could not be saved.' });
+			}
+
+			setFlash(cookies, { type: 'success', message: 'Leave balances saved.' });
+			const nextVertical = targetProfile.vertical_id ?? 'pending';
+			redirect(303, `/admin/users/${nextVertical}/${target}`);
+		}
+
+		if (locals.profile.role !== 'admin') {
+			return fail(403, { error: 'Not allowed.' });
+		}
+
+		const parsed = readProfileForm(formData);
+
+		if ('error' in parsed) {
+			return fail(400, { error: parsed.error });
 		}
 
 		const { error: saveError } = await locals.supabase.rpc('manage_profile', {
@@ -97,5 +143,52 @@ export const actions = {
 		setFlash(cookies, { type: 'success', message: 'Changes saved.' });
 		const nextVertical = parsed.verticalId ?? 'pending';
 		redirect(303, `/admin/users/${nextVertical}/${target}`);
+	},
+
+	delete: async ({ request, cookies, locals }) => {
+		if (!locals.claims || !locals.profile || locals.profile.status !== 'approved') {
+			return fail(401, { error: 'Sign in required.' });
+		}
+
+		if (locals.profile.role !== 'admin') {
+			return fail(403, { error: 'Only admins can delete users.' });
+		}
+
+		const formData = await request.formData();
+		const target = String(formData.get('id') ?? '');
+
+		if (!target) {
+			return fail(400, { error: 'Person not found.' });
+		}
+
+		if (target === locals.claims.sub) {
+			return fail(400, { error: 'You cannot delete your own account.' });
+		}
+
+		const { data: targetProfile } = await locals.supabase
+			.from('profiles')
+			.select('email, vertical_id')
+			.eq('id', target)
+			.maybeSingle();
+
+		if (!targetProfile || isPlatformAdminEmail(targetProfile.email)) {
+			return fail(404, { error: 'Person not found' });
+		}
+
+		const { error: deleteError } = await locals.supabase.rpc('delete_user', { target });
+
+		if (deleteError) {
+			const message = deleteError.message?.includes('cannot delete self')
+				? 'You cannot delete your own account.'
+				: 'This person could not be deleted.';
+			return fail(400, { error: message });
+		}
+
+		setFlash(cookies, {
+			type: 'success',
+			message: `${targetProfile.email} was deleted.`
+		});
+		const nextVertical = targetProfile.vertical_id ?? 'pending';
+		redirect(303, `/admin/users/${nextVertical}`);
 	}
 } satisfies Actions;

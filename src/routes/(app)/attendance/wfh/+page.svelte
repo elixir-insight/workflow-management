@@ -84,7 +84,11 @@
 					{/if}
 
 					<Button type="submit" class="h-11 w-full" disabled={saving}>
-						{saving ? 'Submitting…' : 'Submit WFH'}
+						{saving
+							? 'Submitting…'
+							: data.hasManager
+								? 'Submit for approval'
+								: 'Record WFH'}
 					</Button>
 				</form>
 			</CardContent>

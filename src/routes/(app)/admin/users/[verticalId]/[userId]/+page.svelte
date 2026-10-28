@@ -1,11 +1,16 @@
 <script lang="ts">
+	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
 	import ProfileEditor from '#lib/components/admin/profile-editor.svelte';
+	import { Button } from '#lib/components/ui/button';
 	import { Card, CardContent, CardDescription, CardHeader } from '#lib/components/ui/card';
 	import { profileDisplayName } from '#lib/profile/display';
+	import { toast } from 'svelte-sonner';
 	import type { PageProps } from './$types';
 
 	let { data, form }: PageProps = $props();
+
+	let deleting = $state(false);
 
 	const displayName = $derived(
 		profileDisplayName({
@@ -45,23 +50,76 @@
 	<span class="text-foreground">Details</span>
 </nav>
 
-<Card>
-	<CardHeader>
-		<h2 class="text-foreground text-lg font-medium">{displayName}</h2>
-		<CardDescription>
-			{data.profile.email}
-			{#if data.profile.employee_id}
-				· Employee ID {data.profile.employee_id}
-			{/if}
-		</CardDescription>
-		<CardDescription>Edit access, employee ID, vertical mapping, and leave balances.</CardDescription>
-	</CardHeader>
-	<CardContent>
-		<ProfileEditor
-			profile={data.profile}
-			managers={managers}
-			verticals={data.verticals}
-			error={form?.error ?? null}
-		/>
-	</CardContent>
-</Card>
+<div class="flex flex-col gap-6">
+	<Card>
+		<CardHeader>
+			<h2 class="text-foreground text-lg font-medium">{displayName}</h2>
+			<CardDescription>
+				{data.profile.email}
+				{#if data.profile.employee_id}
+					· Employee ID {data.profile.employee_id}
+				{/if}
+			</CardDescription>
+			<CardDescription>
+				{#if data.canEditAll}
+					Edit access, employee ID, vertical mapping, and leave balances.
+				{:else}
+					View all details. You can edit leave balances only.
+				{/if}
+			</CardDescription>
+		</CardHeader>
+		<CardContent>
+			<ProfileEditor
+				profile={data.profile}
+				managers={managers}
+				verticals={data.verticals}
+				error={form?.error ?? null}
+				canEditAll={data.canEditAll}
+			/>
+		</CardContent>
+	</Card>
+
+	{#if data.canDelete}
+		<Card>
+			<CardHeader>
+				<h2 class="text-foreground text-lg font-medium">Delete user</h2>
+				<CardDescription>
+					Permanently removes this account and their attendance data. This cannot be undone.
+				</CardDescription>
+			</CardHeader>
+			<CardContent>
+				<form
+					method="POST"
+					action="?/delete"
+					class="flex flex-col gap-3"
+					use:enhance={({ cancel }) => {
+						const confirmed = confirm(
+							`Delete ${data.profile.email}? This cannot be undone.`
+						);
+						if (!confirmed) {
+							cancel();
+							return;
+						}
+
+						deleting = true;
+						return async ({ result, update }) => {
+							try {
+								await update();
+								if (result.type === 'failure' && typeof result.data?.error === 'string') {
+									toast.error(result.data.error);
+								}
+							} finally {
+								deleting = false;
+							}
+						};
+					}}
+				>
+					<input type="hidden" name="id" value={data.profile.id} />
+					<Button type="submit" variant="destructive" class="h-11 w-full" disabled={deleting}>
+						{deleting ? 'Deleting…' : 'Delete user'}
+					</Button>
+				</form>
+			</CardContent>
+		</Card>
+	{/if}
+</div>

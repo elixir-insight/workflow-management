@@ -26,6 +26,11 @@
 		<p role="alert" class="text-destructive text-sm">{form.error}</p>
 	{/if}
 
+	<p class="text-muted-foreground text-sm">
+		Approve leave and WFH for people who report to you. People with no reporting lead don’t need
+		approval.
+	</p>
+
 	{#if !data.isManager && data.leaveRequests.length === 0 && data.wfhRequests.length === 0}
 		<Card>
 			<CardHeader>

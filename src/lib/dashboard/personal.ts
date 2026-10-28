@@ -58,7 +58,6 @@ function profileGaps(profile: PersonalDashboard['profile']): string[] {
 	const gaps: string[] = [];
 	if (!profile.first_name.trim()) gaps.push('First name');
 	if (!profile.last_name.trim()) gaps.push('Last name');
-	if (!profile.employee_id?.trim()) gaps.push('Employee ID');
 	if (!profile.designation.trim()) gaps.push('Designation');
 	if (!profile.phone.trim()) gaps.push('Phone');
 	if (!profile.present_address.trim()) gaps.push('Present address');

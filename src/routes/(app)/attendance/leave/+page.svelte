@@ -51,30 +51,37 @@
 	{#if data.created}
 		<Card>
 			<CardHeader>
-				<h2 class="text-foreground text-lg font-medium">Mail draft ready</h2>
-				<CardDescription>
-					Copy this and send it to {managerLabel}
-					{#if data.manager?.email}
-						({data.manager.email})
-					{/if}.
-					{#if !data.manager}
-						Your request is already captured because no reporting lead is assigned.
-					{/if}
-				</CardDescription>
+				{#if data.manager}
+					<h2 class="text-foreground text-lg font-medium">Mail draft ready</h2>
+					<CardDescription>
+						Leave is pending approval from {managerLabel}
+						{#if data.manager.email}
+							({data.manager.email})
+						{/if}. Copy this and send it to them.
+					</CardDescription>
+				{:else}
+					<h2 class="text-foreground text-lg font-medium">Leave recorded</h2>
+					<CardDescription>
+						No reporting lead is mapped, so this leave was approved immediately and deducted from
+						your balance.
+					</CardDescription>
+				{/if}
 			</CardHeader>
-			<CardContent class="flex flex-col gap-3">
-				<pre
-					class="border-border bg-muted/40 text-foreground max-h-80 overflow-auto rounded-lg border p-3 text-sm whitespace-pre-wrap"
-				>{data.created.email_body}</pre>
-				<Button
-					type="button"
-					class="h-10 w-full sm:w-auto"
-					onclick={() => copyEmail(data.created?.email_body ?? '')}
-				>
-					<Copy class="size-4" />
-					{copied ? 'Copied' : 'Copy mail text'}
-				</Button>
-			</CardContent>
+			{#if data.manager && data.created.email_body}
+				<CardContent class="flex flex-col gap-3">
+					<pre
+						class="border-border bg-muted/40 text-foreground max-h-80 overflow-auto rounded-lg border p-3 text-sm whitespace-pre-wrap"
+					>{data.created.email_body}</pre>
+					<Button
+						type="button"
+						class="h-10 w-full sm:w-auto"
+						onclick={() => copyEmail(data.created?.email_body ?? '')}
+					>
+						<Copy class="size-4" />
+						{copied ? 'Copied' : 'Copy mail text'}
+					</Button>
+				</CardContent>
+			{/if}
 		</Card>
 	{/if}
 
@@ -84,6 +91,11 @@
 				<h2 class="text-foreground text-lg font-medium">Apply for leave</h2>
 				<CardDescription>
 					Balances — casual {data.me.casual_leave}, earned {data.me.earned_leave}.
+					{#if data.manager}
+						Needs approval from {managerLabel}.
+					{:else}
+						No reporting lead mapped — leave is recorded immediately.
+					{/if}
 				</CardDescription>
 			</CardHeader>
 			<CardContent>
@@ -156,7 +168,14 @@
 					</div>
 
 					<p class="text-muted-foreground text-xs">
-						Reporting lead: {managerLabel}
+						{#if data.manager}
+							Reporting lead: {managerLabel}
+							{#if data.manager.email}
+								· {data.manager.email}
+							{/if}
+						{:else}
+							No reporting lead — approval is not required.
+						{/if}
 					</p>
 
 					{#if form?.error}
@@ -164,7 +183,11 @@
 					{/if}
 
 					<Button type="submit" class="h-11 w-full" disabled={saving}>
-						{saving ? 'Submitting…' : 'Submit leave'}
+						{saving
+							? 'Submitting…'
+							: data.manager
+								? 'Submit for approval'
+								: 'Record leave'}
 					</Button>
 				</form>
 			</CardContent>

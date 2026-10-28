@@ -86,52 +86,60 @@
 {#if data.verticals.length === 0}
 	<Card class="mb-8">
 		<CardHeader>
-			<CardDescription>No verticals yet. Add the first one below.</CardDescription>
+			<CardDescription>
+				{#if data.canManageVerticals}
+					No verticals yet. Add the first one below.
+				{:else}
+					No verticals yet. Ask an admin to create one.
+				{/if}
+			</CardDescription>
 		</CardHeader>
 	</Card>
 {/if}
 
-<Card>
-	<CardHeader>
-		<h2 class="text-foreground text-lg font-medium">Add vertical</h2>
-		<CardDescription>Product teams that people can be mapped to.</CardDescription>
-	</CardHeader>
-	<CardContent>
-		<form
-			method="POST"
-			action="?/createVertical"
-			class="flex flex-col gap-4"
-			use:enhance={() => {
-				creating = true;
-				return async ({ result, update }) => {
-					try {
-						await update();
-						if (result.type === 'failure' && typeof result.data?.error === 'string') {
-							toast.error(result.data.error);
+{#if data.canManageVerticals}
+	<Card>
+		<CardHeader>
+			<h2 class="text-foreground text-lg font-medium">Add vertical</h2>
+			<CardDescription>Product teams that people can be mapped to.</CardDescription>
+		</CardHeader>
+		<CardContent>
+			<form
+				method="POST"
+				action="?/createVertical"
+				class="flex flex-col gap-4"
+				use:enhance={() => {
+					creating = true;
+					return async ({ result, update }) => {
+						try {
+							await update();
+							if (result.type === 'failure' && typeof result.data?.error === 'string') {
+								toast.error(result.data.error);
+							}
+						} finally {
+							creating = false;
 						}
-					} finally {
-						creating = false;
-					}
-				};
-			}}
-		>
-			<div class="flex flex-col gap-2">
-				<Label for="name">Name</Label>
-				<Input
-					id="name"
-					name="name"
-					required
-					value={form?.name ?? ''}
-					aria-invalid={form?.error ? true : undefined}
-					class="h-11"
-				/>
-			</div>
-			{#if form?.error}
-				<p role="alert" class="text-destructive text-sm">{form.error}</p>
-			{/if}
-			<Button type="submit" class="h-11 w-full" disabled={creating}>
-				{creating ? 'Saving…' : 'Add vertical'}
-			</Button>
-		</form>
-	</CardContent>
-</Card>
+					};
+				}}
+			>
+				<div class="flex flex-col gap-2">
+					<Label for="name">Name</Label>
+					<Input
+						id="name"
+						name="name"
+						required
+						value={form?.name ?? ''}
+						aria-invalid={form?.error ? true : undefined}
+						class="h-11"
+					/>
+				</div>
+				{#if form?.error}
+					<p role="alert" class="text-destructive text-sm">{form.error}</p>
+				{/if}
+				<Button type="submit" class="h-11 w-full" disabled={creating}>
+					{creating ? 'Saving…' : 'Add vertical'}
+				</Button>
+			</form>
+		</CardContent>
+	</Card>
+{/if}

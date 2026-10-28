@@ -30,6 +30,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 			...(counts.get(vertical.id) ?? { total: 0, pending: 0, denied: 0 })
 		})),
 		unassigned: counts.get('pending') ?? { total: 0, pending: 0, denied: 0 },
+		canManageVerticals: locals.profile?.role === 'admin',
 		loadError: verticalError || profileError ? 'Verticals could not be loaded.' : null
 	};
 };
@@ -38,6 +39,10 @@ export const actions = {
 	createVertical: async ({ request, cookies, locals }) => {
 		const formData = await request.formData();
 		const name = String(formData.get('name') ?? '').trim();
+
+		if (locals.profile?.role !== 'admin') {
+			return fail(403, { error: 'Only admins can add verticals.', name });
+		}
 
 		if (!name) {
 			return fail(400, { error: 'Enter a vertical name.', name });

@@ -12,6 +12,7 @@
 	import type { AppRole } from '#lib/supabase/database';
 	import CalendarDays from '@lucide/svelte/icons/calendar-days';
 	import LayoutDashboard from '@lucide/svelte/icons/layout-dashboard';
+	import ScrollText from '@lucide/svelte/icons/scroll-text';
 	import Table from '@lucide/svelte/icons/table';
 	import UserRound from '@lucide/svelte/icons/user-round';
 	import Users from '@lucide/svelte/icons/users';
@@ -34,6 +35,7 @@
 		route:
 			| '/(app)/admin'
 			| '/(app)/admin/users'
+			| '/(app)/admin/logs'
 			| '/(app)/attendance'
 			| '/(app)/timesheet'
 			| '/(app)/payroll'
@@ -91,6 +93,16 @@
 					exact: false
 				}
 			);
+		}
+
+		if (role === 'admin') {
+			items.push({
+				route: '/(app)/admin/logs',
+				pathname: '/admin/logs',
+				label: 'Logs',
+				icon: ScrollText,
+				exact: false
+			});
 		}
 
 		if (!isPlatformAdminEmail(email)) {

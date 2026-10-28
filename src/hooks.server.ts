@@ -55,7 +55,14 @@ function isAllowedPath(role: AppRole | null, pathname: string, email?: string) {
 	}
 
 	if (role === 'payroll') {
-		return pathname === '/payroll' || pathname.startsWith('/admin/users');
+		// Payroll can view user management and timesheet; leave edits only on profiles.
+		// Logs stay admin-only.
+		if (pathname.startsWith('/admin/logs')) return false;
+		return (
+			pathname === '/payroll' ||
+			pathname === '/admin' ||
+			pathname.startsWith('/admin/users')
+		);
 	}
 
 	if (role === 'user') {

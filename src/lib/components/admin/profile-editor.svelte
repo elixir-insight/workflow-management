@@ -17,7 +17,8 @@
 		managers,
 		verticals,
 		error = null,
-		action = '?/save'
+		action = '?/save',
+		canEditAll = true
 	}: {
 		profile: {
 			id: string;
@@ -34,12 +35,14 @@
 		verticals: Vertical[];
 		error?: string | null;
 		action?: string;
+		canEditAll?: boolean;
 	} = $props();
 
 	let saving = $state(false);
 
 	const fieldClass =
 		'border-input bg-background text-foreground h-11 w-full rounded-lg border px-2.5 text-base outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-3 md:text-sm';
+	const readonlyClass = `${fieldClass} bg-muted/40 text-muted-foreground`;
 </script>
 
 <form
@@ -62,12 +65,28 @@
 >
 	<input type="hidden" name="id" value={profile.id} />
 
+	{#if !canEditAll}
+		<input type="hidden" name="status" value={profile.status} />
+		<input type="hidden" name="verticalId" value={profile.vertical_id ?? ''} />
+		<input type="hidden" name="role" value={profile.role ?? ''} />
+		<input type="hidden" name="reportsTo" value={profile.reports_to ?? ''} />
+		<input type="hidden" name="employeeId" value={profile.employee_id ?? ''} />
+		<input type="hidden" name="designation" value={profile.designation} />
+	{/if}
+
 	<div class="flex flex-col gap-2">
 		<Label for="status" class="flex items-center gap-2">
 			Access
 			<StatusDot status={profile.status} />
 		</Label>
-		<select id="status" name="status" required class={fieldClass} value={profile.status}>
+		<select
+			id="status"
+			name={canEditAll ? 'status' : undefined}
+			required={canEditAll}
+			disabled={!canEditAll}
+			class={canEditAll ? fieldClass : readonlyClass}
+			value={profile.status}
+		>
 			{#each accessStatuses as status (status)}
 				<option value={status}>{accessStatusLabels[status]}</option>
 			{/each}
@@ -76,7 +95,13 @@
 
 	<div class="flex flex-col gap-2">
 		<Label for="verticalId">Vertical</Label>
-		<select id="verticalId" name="verticalId" class={fieldClass} value={profile.vertical_id ?? ''}>
+		<select
+			id="verticalId"
+			name={canEditAll ? 'verticalId' : undefined}
+			disabled={!canEditAll}
+			class={canEditAll ? fieldClass : readonlyClass}
+			value={profile.vertical_id ?? ''}
+		>
 			<option value="">Unassigned</option>
 			{#each verticals as vertical (vertical.id)}
 				<option value={vertical.id}>{vertical.name}</option>
@@ -86,7 +111,13 @@
 
 	<div class="flex flex-col gap-2">
 		<Label for="role">Role</Label>
-		<select id="role" name="role" class={fieldClass} value={profile.role ?? ''}>
+		<select
+			id="role"
+			name={canEditAll ? 'role' : undefined}
+			disabled={!canEditAll}
+			class={canEditAll ? fieldClass : readonlyClass}
+			value={profile.role ?? ''}
+		>
 			<option value="">None</option>
 			{#each roles as role (role)}
 				<option value={role}>{roleLabels[role]}</option>
@@ -96,7 +127,13 @@
 
 	<div class="flex flex-col gap-2">
 		<Label for="reportsTo">Reports to</Label>
-		<select id="reportsTo" name="reportsTo" class={fieldClass} value={profile.reports_to ?? ''}>
+		<select
+			id="reportsTo"
+			name={canEditAll ? 'reportsTo' : undefined}
+			disabled={!canEditAll}
+			class={canEditAll ? fieldClass : readonlyClass}
+			value={profile.reports_to ?? ''}
+		>
 			<option value="">No one</option>
 			{#each managers as manager (manager.id)}
 				<option value={manager.id}>
@@ -104,27 +141,46 @@
 				</option>
 			{/each}
 		</select>
+		<p class="text-muted-foreground text-xs">
+			If set, leave and WFH need this person’s approval. If empty, leave and WFH are recorded
+			immediately.
+		</p>
 	</div>
 
 	<div class="flex flex-col gap-2">
-		<Label for="employeeId">Employee ID</Label>
+		<Label for="employeeId">
+			Employee ID
+			<span class="text-muted-foreground font-normal">(optional)</span>
+		</Label>
 		<Input
 			id="employeeId"
-			name="employeeId"
+			name={canEditAll ? 'employeeId' : undefined}
 			value={profile.employee_id ?? ''}
 			placeholder="Unique organisation ID"
 			autocomplete="off"
-			class="h-11"
+			readonly={!canEditAll}
+			class={canEditAll ? 'h-11' : 'h-11 bg-muted/40 text-muted-foreground'}
 		/>
 	</div>
 
 	<div class="flex flex-col gap-2">
 		<Label for="designation">Designation</Label>
-		<Input id="designation" name="designation" value={profile.designation} class="h-11" />
+		<Input
+			id="designation"
+			name={canEditAll ? 'designation' : undefined}
+			value={profile.designation}
+			readonly={!canEditAll}
+			class={canEditAll ? 'h-11' : 'h-11 bg-muted/40 text-muted-foreground'}
+		/>
 	</div>
 
 	<fieldset class="grid grid-cols-2 gap-3">
-		<legend class="text-foreground mb-2 text-sm font-medium">Leave balances</legend>
+		<legend class="text-foreground mb-2 text-sm font-medium">
+			Leave balances
+			{#if !canEditAll}
+				<span class="text-muted-foreground font-normal"> · editable</span>
+			{/if}
+		</legend>
 		<div class="flex flex-col gap-2">
 			<Label for="casualLeave">Casual</Label>
 			<Input
@@ -156,6 +212,6 @@
 	{/if}
 
 	<Button type="submit" class="h-11 w-full" disabled={saving}>
-		{saving ? 'Saving…' : 'Save'}
+		{saving ? 'Saving…' : canEditAll ? 'Save' : 'Save leave balances'}
 	</Button>
 </form>

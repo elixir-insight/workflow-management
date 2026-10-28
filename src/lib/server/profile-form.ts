@@ -50,10 +50,6 @@ export function readProfileForm(formData: FormData): ProfileFormInput | { error:
 			return { error: 'Approved users need a role, vertical, and designation.' };
 		}
 
-		if (!employeeId) {
-			return { error: 'Approved users need an employee ID.' };
-		}
-
 		if (casualLeave === null || earnedLeave === null) {
 			return { error: 'Enter leave balances for an approved user.' };
 		}
