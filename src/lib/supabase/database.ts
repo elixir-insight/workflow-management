@@ -392,8 +392,34 @@ export type Database = {
 				};
 				Returns: undefined;
 			};
+			delete_leave_request_as_approver: {
+				Args: {
+					target: string;
+				};
+				Returns: undefined;
+			};
+			delete_wfh_request_as_approver: {
+				Args: {
+					target: string;
+				};
+				Returns: undefined;
+			};
 			delete_user: {
 				Args: {
+					target: string;
+				};
+				Returns: undefined;
+			};
+			revise_leave_request: {
+				Args: {
+					next_status: string;
+					target: string;
+				};
+				Returns: undefined;
+			};
+			revise_wfh_request: {
+				Args: {
+					next_status: string;
 					target: string;
 				};
 				Returns: undefined;
