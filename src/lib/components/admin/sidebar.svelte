@@ -81,7 +81,7 @@
 				{
 					route: '/(app)/admin/users',
 					pathname: '/admin/users',
-					label: 'User management',
+					label: 'User Management',
 					icon: Users,
 					exact: false
 				},
