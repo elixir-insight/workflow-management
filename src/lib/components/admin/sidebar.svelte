@@ -11,7 +11,6 @@
 	import { profileDisplayName } from '#lib/profile/display';
 	import type { AppRole } from '#lib/supabase/database';
 	import CalendarDays from '@lucide/svelte/icons/calendar-days';
-	import CalendarOff from '@lucide/svelte/icons/calendar-off';
 	import LayoutDashboard from '@lucide/svelte/icons/layout-dashboard';
 	import ScrollText from '@lucide/svelte/icons/scroll-text';
 	import Table from '@lucide/svelte/icons/table';
@@ -36,7 +35,6 @@
 		route:
 			| '/(app)/admin'
 			| '/(app)/admin/users'
-			| '/(app)/admin/holidays'
 			| '/(app)/admin/logs'
 			| '/(app)/attendance'
 			| '/(app)/timesheet'
@@ -98,22 +96,13 @@
 		}
 
 		if (role === 'admin') {
-			items.push(
-				{
-					route: '/(app)/admin/holidays',
-					pathname: '/admin/holidays',
-					label: 'Office holidays',
-					icon: CalendarOff,
-					exact: false
-				},
-				{
-					route: '/(app)/admin/logs',
-					pathname: '/admin/logs',
-					label: 'Logs',
-					icon: ScrollText,
-					exact: false
-				}
-			);
+			items.push({
+				route: '/(app)/admin/logs',
+				pathname: '/admin/logs',
+				label: 'Logs',
+				icon: ScrollText,
+				exact: false
+			});
 		}
 
 		if (!isPlatformAdminEmail(email)) {
