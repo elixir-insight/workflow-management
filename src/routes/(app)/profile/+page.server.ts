@@ -16,7 +16,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 	const { data: profile, error: profileError } = await locals.supabase
 		.from('profiles')
 		.select(
-			'id, email, first_name, last_name, phone, present_address, avatar_path, employee_id, designation, role'
+			'id, email, first_name, last_name, phone, present_address, avatar_path, employee_id, designation, role, reports_to'
 		)
 		.eq('id', locals.claims.sub)
 		.maybeSingle();
@@ -25,11 +25,27 @@ export const load: PageServerLoad = async ({ locals }) => {
 		error(500, 'Your profile could not be loaded.');
 	}
 
+	let manager: {
+		email: string;
+		first_name: string;
+		last_name: string;
+	} | null = null;
+
+	if (profile.reports_to) {
+		const { data } = await locals.supabase
+			.from('profiles')
+			.select('email, first_name, last_name')
+			.eq('id', profile.reports_to)
+			.maybeSingle();
+		manager = data;
+	}
+
 	return {
 		profile: {
 			...profile,
 			avatarUrl: avatarPublicUrl(SUPABASE_URL, profile.avatar_path)
-		}
+		},
+		manager
 	};
 };
 

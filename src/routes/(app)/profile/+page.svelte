@@ -121,6 +121,16 @@
 					· ID {data.profile.employee_id}
 				{/if}
 			</CardDescription>
+			<CardDescription>
+				{#if data.manager}
+					Reports to {profileDisplayName(data.manager)}
+					{#if data.manager.email}
+						· {data.manager.email}
+					{/if}
+				{:else}
+					No reporting lead mapped
+				{/if}
+			</CardDescription>
 		</CardHeader>
 		<CardContent>
 			<form

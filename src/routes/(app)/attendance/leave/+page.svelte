@@ -15,6 +15,7 @@
 	let { data, form }: PageProps = $props();
 
 	let saving = $state(false);
+	let cancellingId = $state<string | null>(null);
 	let mailOpen = $state(Boolean(data.created?.email_body));
 
 	$effect(() => {
@@ -190,17 +191,51 @@
 									</div>
 									<RequestStatusBadge status={request.status} />
 								</div>
-								{#if request.email_body}
+								{#if request.email_body || request.status === 'pending'}
 									<div class="mt-3 flex flex-wrap gap-2">
-										<Button
-											type="button"
-											variant="outline"
-											size="sm"
-											onclick={() => copyEmail(request.email_body)}
-										>
-											<Copy class="size-3.5" />
-											Copy mail
-										</Button>
+										{#if request.email_body}
+											<Button
+												type="button"
+												variant="outline"
+												size="sm"
+												onclick={() => copyEmail(request.email_body)}
+											>
+												<Copy class="size-3.5" />
+												Copy mail
+											</Button>
+										{/if}
+										{#if request.status === 'pending'}
+											<form
+												method="POST"
+												action="?/cancel"
+												use:enhance={() => {
+													cancellingId = request.id;
+													return async ({ result, update }) => {
+														try {
+															await update();
+															if (
+																result.type === 'failure' &&
+																typeof result.data?.error === 'string'
+															) {
+																toast.error(result.data.error);
+															}
+														} finally {
+															cancellingId = null;
+														}
+													};
+												}}
+											>
+												<input type="hidden" name="id" value={request.id} />
+												<Button
+													type="submit"
+													variant="outline"
+													size="sm"
+													disabled={cancellingId === request.id}
+												>
+													{cancellingId === request.id ? 'Cancelling…' : 'Cancel request'}
+												</Button>
+											</form>
+										{/if}
 									</div>
 								{/if}
 							</li>

@@ -69,6 +69,16 @@
 								<span>{person.designation}</span>
 							{/if}
 						</p>
+						<p class="text-muted-foreground mt-1 text-xs">
+							{#if person.reportsToName}
+								Reports to {person.reportsToName}
+								{#if person.reportsToEmail}
+									· {person.reportsToEmail}
+								{/if}
+							{:else}
+								No reporting lead mapped
+							{/if}
+						</p>
 					</div>
 					<ChevronRight class="text-muted-foreground size-4 shrink-0" aria-hidden="true" />
 				</a>

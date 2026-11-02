@@ -179,5 +179,35 @@ export const actions = {
 						: 'Leave recorded. Copy the mail draft if you still want to notify someone.'
 		});
 		redirect(303, `/attendance/leave?created=${requestId}`);
+	},
+
+	cancel: async ({ request, cookies, locals }) => {
+		if (!locals.claims || !locals.profile || locals.profile.status !== 'approved') {
+			return fail(401, { error: 'Sign in required.' });
+		}
+
+		const formData = await request.formData();
+		const id = String(formData.get('id') ?? '').trim();
+
+		if (!id) {
+			return fail(400, { error: 'Choose a leave request to cancel.' });
+		}
+
+		const { error: cancelError } = await locals.supabase.rpc('cancel_leave_request', {
+			target: id
+		});
+
+		if (cancelError) {
+			const message = cancelError.message?.includes('only pending')
+				? 'Only pending leave can be cancelled.'
+				: 'The leave request could not be cancelled.';
+			return fail(400, { error: message });
+		}
+
+		setFlash(cookies, {
+			type: 'success',
+			message: 'Pending leave cancelled.'
+		});
+		redirect(303, '/attendance/leave');
 	}
 } satisfies Actions;

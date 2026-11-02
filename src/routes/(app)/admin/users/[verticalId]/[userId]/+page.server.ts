@@ -58,11 +58,15 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 		error(404, 'Vertical not found');
 	}
 
+	const reportingLead =
+		(managers ?? []).find((manager) => manager.id === profile.reports_to) ?? null;
+
 	return {
 		vertical,
 		profile,
 		verticals: verticals ?? [],
 		managers: managers ?? [],
+		reportingLead,
 		canEditAll,
 		canDelete: canEditAll
 	};

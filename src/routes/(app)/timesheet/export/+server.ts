@@ -1,8 +1,10 @@
 import { platformAdminEmail } from '#lib/auth/platform-admin';
 import {
+	buildDayMeta,
 	buildTimesheetMatrix,
 	monthBounds,
 	timesheetToCsv,
+	type OfficeHoliday,
 	type TimesheetDayEntry,
 	type TimesheetEmployee,
 	type TimesheetLopEntry,
@@ -37,7 +39,7 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 		error(400, 'Invalid month.');
 	}
 
-	const [{ data: vertical }, { data: employees }] = await Promise.all([
+	const [{ data: vertical }, { data: employees }, { data: holidayRows }] = await Promise.all([
 		locals.supabase.from('verticals').select('id, name').eq('id', verticalId).maybeSingle(),
 		locals.supabase
 			.from('profiles')
@@ -45,7 +47,12 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 			.eq('vertical_id', verticalId)
 			.eq('status', 'approved')
 			.neq('email', platformAdminEmail)
-			.order('email')
+			.order('email'),
+		locals.supabase
+			.from('office_holidays')
+			.select('holiday_date, name')
+			.gte('holiday_date', bounds.startDate)
+			.lte('holiday_date', bounds.endDate)
 	]);
 
 	if (!vertical) {
@@ -54,6 +61,7 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 
 	const people = (employees ?? []) as TimesheetEmployee[];
 	const employeeIds = people.map((person) => person.id);
+	const dayMeta = buildDayMeta(bounds.days, (holidayRows ?? []) as OfficeHoliday[]);
 
 	let entries: TimesheetDayEntry[] = [];
 	let wfhEntries: TimesheetWfhEntry[] = [];
@@ -97,7 +105,14 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 		lopEntries = (lopRows ?? []) as TimesheetLopEntry[];
 	}
 
-	const rows = buildTimesheetMatrix(people, bounds.days, entries, wfhEntries, lopEntries);
+	const rows = buildTimesheetMatrix(
+		people,
+		bounds.days,
+		entries,
+		wfhEntries,
+		lopEntries,
+		dayMeta
+	);
 	const safeName = vertical.name.replace(/[^\w.-]+/g, '_');
 	const filename = `timesheet_${safeName}_${month}`;
 	const body = timesheetToCsv(vertical.name, month, bounds.days, rows);

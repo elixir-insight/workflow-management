@@ -33,6 +33,20 @@ export type TimesheetCell = {
 	lop: boolean;
 };
 
+export type TimesheetDayMeta = {
+	date: string;
+	dayNumber: number;
+	weekday: string;
+	weekend: boolean;
+	holiday: boolean;
+	holidayName: string | null;
+};
+
+export type OfficeHoliday = {
+	holiday_date: string;
+	name: string;
+};
+
 export function monthBounds(month: string) {
 	if (!/^\d{4}-\d{2}$/.test(month)) return null;
 	const [yearText, monthText] = month.split('-');
@@ -68,15 +82,53 @@ export function formatClock(value: string | null | undefined) {
 	return value.slice(0, 5);
 }
 
+export function isWeekendDate(isoDate: string) {
+	const date = new Date(`${isoDate}T00:00:00Z`);
+	if (Number.isNaN(date.getTime())) return false;
+	const day = date.getUTCDay();
+	return day === 0 || day === 6;
+}
+
+export function weekdayShort(isoDate: string) {
+	const date = new Date(`${isoDate}T00:00:00Z`);
+	if (Number.isNaN(date.getTime())) return '';
+	return date.toLocaleDateString('en-IN', { weekday: 'short', timeZone: 'UTC' });
+}
+
+export function buildDayMeta(days: string[], holidays: OfficeHoliday[] = []): TimesheetDayMeta[] {
+	const holidayByDate = new Map(
+		holidays.map((holiday) => [holiday.holiday_date, holiday.name.trim() || 'Holiday'])
+	);
+
+	return days.map((date) => {
+		const holidayName = holidayByDate.get(date) ?? null;
+		return {
+			date,
+			dayNumber: Number(date.slice(8)),
+			weekday: weekdayShort(date),
+			weekend: isWeekendDate(date),
+			holiday: holidayName !== null,
+			holidayName
+		};
+	});
+}
+
 export function cellLabel(
 	inTime: string | null,
 	outTime: string | null,
 	wfh = false,
-	lop = false
+	lop = false,
+	weekend = false,
+	holiday = false
 ) {
 	const times =
 		!inTime && !outTime ? '' : `${formatClock(inTime)}-${formatClock(outTime)}`;
-	const tags = [wfh ? 'WFH' : null, lop ? 'LOP' : null].filter(Boolean);
+	const tags = [
+		weekend ? 'Weekend' : null,
+		holiday ? 'Holiday' : null,
+		wfh ? 'WFH' : null,
+		lop ? 'LOP' : null
+	].filter(Boolean);
 	if (tags.length && times) return `${times} · ${tags.join(' · ')}`;
 	if (tags.length) return tags.join(' · ');
 	return times;
@@ -109,13 +161,15 @@ export function buildTimesheetMatrix(
 	days: string[],
 	entries: TimesheetDayEntry[],
 	wfhEntries: TimesheetWfhEntry[] = [],
-	lopEntries: TimesheetLopEntry[] = []
+	lopEntries: TimesheetLopEntry[] = [],
+	dayMeta: TimesheetDayMeta[] = buildDayMeta(days)
 ) {
 	const byUserDate = new Map<string, { inTime: string | null; outTime: string | null }>();
 	const wfhByUserDate = new Set(
 		wfhEntries.map((entry) => `${entry.user_id}:${entry.work_date}`)
 	);
 	const lopByUserDate = expandLopDates(lopEntries, days);
+	const metaByDate = new Map(dayMeta.map((meta) => [meta.date, meta]));
 
 	for (const entry of entries) {
 		byUserDate.set(`${entry.user_id}:${entry.work_date}`, {
@@ -129,8 +183,11 @@ export function buildTimesheetMatrix(
 		cells: days.map((day) => {
 			const key = `${employee.id}:${day}`;
 			const times = byUserDate.get(key);
+			const meta = metaByDate.get(day);
 			const wfh = wfhByUserDate.has(key);
 			const lop = lopByUserDate.has(key);
+			const weekend = meta?.weekend ?? false;
+			const holiday = meta?.holiday ?? false;
 			const inTime = times?.inTime ?? null;
 			const outTime = times?.outTime ?? null;
 
@@ -139,7 +196,7 @@ export function buildTimesheetMatrix(
 				outTime,
 				wfh,
 				lop,
-				label: cellLabel(inTime, outTime, wfh, lop)
+				label: cellLabel(inTime, outTime, wfh, lop, weekend, holiday)
 			} satisfies TimesheetCell;
 		})
 	}));

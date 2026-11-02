@@ -1,8 +1,10 @@
 import { platformAdminEmail } from '#lib/auth/platform-admin';
 import {
+	buildDayMeta,
 	buildTimesheetMatrix,
 	currentMonthValue,
 	monthBounds,
+	type OfficeHoliday,
 	type TimesheetDayEntry,
 	type TimesheetEmployee,
 	type TimesheetLopEntry,
@@ -31,14 +33,27 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		error(400, 'Invalid month.');
 	}
 
-	const { data: verticals, error: verticalError } = await locals.supabase
-		.from('verticals')
-		.select('id, name')
-		.order('name');
+	const [{ data: verticals, error: verticalError }, { data: holidayRows, error: holidayError }] =
+		await Promise.all([
+			locals.supabase.from('verticals').select('id, name').order('name'),
+			locals.supabase
+				.from('office_holidays')
+				.select('holiday_date, name')
+				.gte('holiday_date', bounds.startDate)
+				.lte('holiday_date', bounds.endDate)
+				.order('holiday_date')
+		]);
 
 	if (verticalError) {
 		error(500, 'Verticals could not be loaded.');
 	}
+
+	if (holidayError) {
+		error(500, 'Office holidays could not be loaded.');
+	}
+
+	const holidays = (holidayRows ?? []) as OfficeHoliday[];
+	const dayMeta = buildDayMeta(bounds.days, holidays);
 
 	const requestedVertical = url.searchParams.get('verticalId');
 	const selectedVertical =
@@ -51,10 +66,13 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 			month,
 			monthLabel: bounds.startDate.slice(0, 7),
 			days: bounds.days,
+			dayMeta,
+			holidays,
 			verticals: [],
 			selectedVertical: null,
 			rows: [],
-			employeeCount: 0
+			employeeCount: 0,
+			canManageHolidays: locals.profile.role === 'admin'
 		};
 	}
 
@@ -128,7 +146,8 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		bounds.days,
 		entries,
 		wfhEntries,
-		lopEntries
+		lopEntries,
+		dayMeta
 	).map((row) => ({
 		...row,
 		displayName: profileDisplayName(row.employee)
@@ -142,9 +161,12 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 			timeZone: 'UTC'
 		}),
 		days: bounds.days,
+		dayMeta,
+		holidays,
 		verticals: verticals ?? [],
 		selectedVertical,
 		rows,
-		employeeCount: people.length
+		employeeCount: people.length,
+		canManageHolidays: locals.profile.role === 'admin'
 	};
 };

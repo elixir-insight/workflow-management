@@ -62,6 +62,13 @@
 					· {data.profile.employee_id}
 				{/if}
 			</p>
+			<p class="text-muted-foreground mt-1 text-sm">
+				{#if data.manager}
+					Reports to {profileDisplayName(data.manager)}
+				{:else}
+					No reporting lead mapped
+				{/if}
+			</p>
 		</div>
 		<div class="flex flex-wrap gap-2">
 			<Button href={resolve('/(app)/attendance')} class="h-10">

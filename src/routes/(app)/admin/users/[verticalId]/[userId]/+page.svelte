@@ -61,6 +61,16 @@
 				{/if}
 			</CardDescription>
 			<CardDescription>
+				{#if data.reportingLead}
+					Reports to {profileDisplayName(data.reportingLead)}
+					{#if data.reportingLead.email}
+						· {data.reportingLead.email}
+					{/if}
+				{:else}
+					No reporting lead mapped
+				{/if}
+			</CardDescription>
+			<CardDescription>
 				{#if data.canEditAll}
 					Edit access, employee ID, vertical mapping, and leave balances.
 				{:else}

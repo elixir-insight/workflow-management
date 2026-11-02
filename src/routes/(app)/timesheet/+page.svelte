@@ -29,6 +29,12 @@
 		});
 		return `${resolve('/(app)/timesheet/export')}?${params.toString()}`;
 	}
+
+	function dayColumnClass(weekend: boolean, holiday: boolean) {
+		if (holiday) return 'bg-amber-500/10';
+		if (weekend) return 'bg-muted/60';
+		return '';
+	}
 </script>
 
 <svelte:head>
@@ -41,22 +47,39 @@
 			<p class="text-muted-foreground text-sm">
 				In and out times for everyone in a vertical, by month.
 			</p>
-			<p class="text-muted-foreground mt-1 flex items-center gap-2 text-xs">
-				<span
-					class="bg-primary/10 text-primary inline-flex items-center rounded-full px-2 py-0.5 font-medium"
-				>
-					WFH
+			<div class="text-muted-foreground mt-2 flex flex-wrap items-center gap-3 text-xs">
+				<span class="inline-flex items-center gap-1.5">
+					<span
+						class="bg-primary/10 text-primary inline-flex items-center rounded-full px-2 py-0.5 font-medium"
+					>
+						WFH
+					</span>
+					Approved WFH
 				</span>
-				Approved work-from-home days
-			</p>
+				<span class="inline-flex items-center gap-1.5">
+					<span class="bg-muted inline-block size-3 rounded-sm border"></span>
+					Weekend
+				</span>
+				<span class="inline-flex items-center gap-1.5">
+					<span class="inline-block size-3 rounded-sm bg-amber-500/30"></span>
+					Office holiday
+				</span>
+			</div>
 		</div>
 
-		{#if data.selectedVertical}
-			<Button href={exportHref()} variant="outline" class="h-10">
-				<Download class="size-4" />
-				Export CSV
-			</Button>
-		{/if}
+		<div class="flex flex-wrap gap-2">
+			{#if data.canManageHolidays}
+				<Button href={resolve('/(app)/admin/holidays')} variant="outline" class="h-10">
+					Office holidays
+				</Button>
+			{/if}
+			{#if data.selectedVertical}
+				<Button href={exportHref()} variant="outline" class="h-10">
+					<Download class="size-4" />
+					Export CSV
+				</Button>
+			{/if}
+		</div>
 	</div>
 
 	<Card>
@@ -99,6 +122,27 @@
 		</CardContent>
 	</Card>
 
+	{#if data.holidays.length > 0}
+		<Card>
+			<CardHeader>
+				<h2 class="text-foreground text-base font-medium">Office holidays this month</h2>
+				<CardDescription>Marked on the grid below.</CardDescription>
+			</CardHeader>
+			<CardContent>
+				<ul class="flex flex-col gap-2">
+					{#each data.holidays as holiday (holiday.holiday_date)}
+						<li class="text-sm">
+							<span class="text-foreground font-medium">{holiday.holiday_date}</span>
+							<span class="text-muted-foreground">
+								· {holiday.name.trim() || 'Holiday'}
+							</span>
+						</li>
+					{/each}
+				</ul>
+			</CardContent>
+		</Card>
+	{/if}
+
 	{#if data.selectedVertical}
 		<Card>
 			<CardHeader class="flex-row items-center justify-between gap-3 space-y-0">
@@ -125,11 +169,31 @@
 									<th class="border-border text-muted-foreground border-b px-3 py-2 font-medium">
 										ID
 									</th>
-									{#each data.days as day (day)}
+									{#each data.dayMeta as day (day.date)}
 										<th
-											class="border-border text-muted-foreground border-b px-2 py-2 text-center font-medium"
+											class="border-border text-muted-foreground border-b px-2 py-2 text-center font-medium {dayColumnClass(
+												day.weekend,
+												day.holiday
+											)}"
+											title={day.holiday
+												? day.holidayName || 'Office holiday'
+												: day.weekend
+													? 'Weekend'
+													: undefined}
 										>
-											{Number(day.slice(8))}
+											<div class="flex flex-col items-center gap-0.5">
+												<span>{day.dayNumber}</span>
+												<span class="text-[10px] font-normal tracking-wide uppercase">
+													{day.weekday}
+												</span>
+												{#if day.holiday}
+													<span class="text-amber-700 dark:text-amber-400 text-[9px] font-medium">
+														H
+													</span>
+												{:else if day.weekend}
+													<span class="text-[9px] font-medium opacity-70">W</span>
+												{/if}
+											</div>
 										</th>
 									{/each}
 								</tr>
@@ -150,12 +214,34 @@
 										>
 											{row.employee.employee_id ?? '—'}
 										</td>
-										{#each row.cells as cell, index (data.days[index])}
+										{#each row.cells as cell, index (data.dayMeta[index].date)}
+											{@const day = data.dayMeta[index]}
 											<td
-												class="border-border border-b px-2 py-2 text-center align-middle"
-												title={cell.label || 'No times'}
+												class="border-border border-b px-2 py-2 text-center align-middle {dayColumnClass(
+													day.weekend,
+													day.holiday
+												)}"
+												title={cell.label ||
+													(day.holiday
+														? day.holidayName || 'Office holiday'
+														: day.weekend
+															? 'Weekend'
+															: 'No times')}
 											>
 												<div class="flex min-w-16 flex-col items-center gap-1">
+													{#if day.holiday}
+														<span
+															class="inline-flex rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium tracking-wide text-amber-800 dark:text-amber-300"
+														>
+															{day.holidayName || 'Holiday'}
+														</span>
+													{:else if day.weekend}
+														<span
+															class="bg-muted text-muted-foreground inline-flex rounded-full px-1.5 py-0.5 text-[10px] font-medium tracking-wide"
+														>
+															Weekend
+														</span>
+													{/if}
 													{#if cell.wfh}
 														<span
 															class="bg-primary/10 text-primary inline-flex rounded-full px-1.5 py-0.5 text-[10px] font-medium tracking-wide"
@@ -163,10 +249,17 @@
 															WFH
 														</span>
 													{/if}
+													{#if cell.lop}
+														<span
+															class="inline-flex rounded-full bg-rose-500/10 px-1.5 py-0.5 text-[10px] font-medium tracking-wide text-rose-700 dark:text-rose-300"
+														>
+															LOP
+														</span>
+													{/if}
 													<span class="text-muted-foreground text-xs whitespace-nowrap">
 														{#if cell.inTime || cell.outTime}
 															{cell.inTime?.slice(0, 5) ?? '—'}–{cell.outTime?.slice(0, 5) ?? '—'}
-														{:else if !cell.wfh}
+														{:else if !cell.wfh && !cell.lop && !day.weekend && !day.holiday}
 															—
 														{/if}
 													</span>

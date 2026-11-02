@@ -91,6 +91,41 @@ export type Database = {
 					}
 				];
 			};
+			office_holidays: {
+				Row: {
+					created_at: string;
+					created_by: string | null;
+					holiday_date: string;
+					id: string;
+					name: string;
+					updated_at: string;
+				};
+				Insert: {
+					created_at?: string;
+					created_by?: string | null;
+					holiday_date: string;
+					id?: string;
+					name?: string;
+					updated_at?: string;
+				};
+				Update: {
+					created_at?: string;
+					created_by?: string | null;
+					holiday_date?: string;
+					id?: string;
+					name?: string;
+					updated_at?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: 'office_holidays_created_by_fkey';
+						columns: ['created_by'];
+						isOneToOne: false;
+						referencedRelation: 'profiles';
+						referencedColumns: ['id'];
+					}
+				];
+			};
 			leave_requests: {
 				Row: {
 					approver_id: string | null;
@@ -325,6 +360,12 @@ export type Database = {
 					next_start_date: string;
 				};
 				Returns: string;
+			};
+			cancel_leave_request: {
+				Args: {
+					target: string;
+				};
+				Returns: undefined;
 			};
 			apply_wfh_request: {
 				Args: {

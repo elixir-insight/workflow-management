@@ -46,6 +46,11 @@ export type PersonalDashboard = {
 		present_address: string;
 		avatar_path: string | null;
 	};
+	manager: {
+		email: string;
+		first_name: string;
+		last_name: string;
+	} | null;
 	todayAttendance: {
 		id: string;
 		work_date: string;
@@ -171,9 +176,20 @@ export async function loadPersonalDashboard(
 		};
 	});
 
+	let manager: PersonalDashboard['manager'] = null;
+	if (resolvedProfile.reports_to) {
+		const { data } = await supabase
+			.from('profiles')
+			.select('email, first_name, last_name')
+			.eq('id', resolvedProfile.reports_to)
+			.maybeSingle();
+		manager = data;
+	}
+
 	return {
 		today,
 		profile: resolvedProfile,
+		manager,
 		todayAttendance,
 		recentDays,
 		leaveRequests: leaveRequests ?? [],
