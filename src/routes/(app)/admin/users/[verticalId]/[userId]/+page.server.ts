@@ -22,7 +22,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 			locals.supabase
 				.from('profiles')
 				.select(
-					'id, email, first_name, last_name, status, role, designation, employee_id, casual_leave, earned_leave, reports_to, vertical_id, created_at'
+					'id, email, first_name, last_name, phone, present_address, status, role, designation, employee_id, casual_leave, earned_leave, reports_to, vertical_id, timesheet_exempt, created_at'
 				)
 				.eq('id', params.userId)
 				.maybeSingle(),
@@ -133,7 +133,12 @@ export const actions = {
 			next_designation: parsed.designation || null,
 			next_casual: parsed.casualLeave,
 			next_earned: parsed.earnedLeave,
-			next_employee_id: parsed.employeeId
+			next_employee_id: parsed.employeeId,
+			next_first_name: parsed.firstName,
+			next_last_name: parsed.lastName,
+			next_phone: parsed.phone,
+			next_present_address: parsed.presentAddress,
+			next_timesheet_exempt: parsed.timesheetExempt
 		});
 
 		if (saveError) {

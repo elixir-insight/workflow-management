@@ -46,6 +46,7 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 			.select('id, email, first_name, last_name, employee_id, designation')
 			.eq('vertical_id', verticalId)
 			.eq('status', 'approved')
+			.eq('timesheet_exempt', false)
 			.neq('email', platformAdminEmail)
 			.order('email'),
 		locals.supabase

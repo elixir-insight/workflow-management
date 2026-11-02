@@ -72,7 +72,7 @@
 			</CardDescription>
 			<CardDescription>
 				{#if data.canEditAll}
-					Edit access, employee ID, vertical mapping, and leave balances.
+					Edit personal details, access, reporting, timesheet exemption, and leave balances.
 				{:else}
 					View all details. You can edit leave balances only.
 				{/if}

@@ -22,7 +22,7 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 	let query = locals.supabase
 		.from('profiles')
 		.select(
-			'id, email, first_name, last_name, employee_id, status, role, designation, casual_leave, earned_leave, created_at, vertical_id, reports_to'
+			'id, email, first_name, last_name, employee_id, status, role, designation, casual_leave, earned_leave, created_at, vertical_id, reports_to, timesheet_exempt'
 		)
 		.neq('email', platformAdminEmail)
 		.order('email');

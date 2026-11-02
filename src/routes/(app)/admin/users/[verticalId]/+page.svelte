@@ -78,6 +78,9 @@
 							{:else}
 								No reporting lead mapped
 							{/if}
+							{#if person.timesheet_exempt}
+								· Exempt from timesheet
+							{/if}
 						</p>
 					</div>
 					<ChevronRight class="text-muted-foreground size-4 shrink-0" aria-hidden="true" />

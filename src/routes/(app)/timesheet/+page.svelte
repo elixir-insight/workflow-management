@@ -229,19 +229,6 @@
 															: 'No times')}
 											>
 												<div class="flex min-w-16 flex-col items-center gap-1">
-													{#if day.holiday}
-														<span
-															class="inline-flex rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium tracking-wide text-amber-800 dark:text-amber-300"
-														>
-															{day.holidayName || 'Holiday'}
-														</span>
-													{:else if day.weekend}
-														<span
-															class="bg-muted text-muted-foreground inline-flex rounded-full px-1.5 py-0.5 text-[10px] font-medium tracking-wide"
-														>
-															Weekend
-														</span>
-													{/if}
 													{#if cell.wfh}
 														<span
 															class="bg-primary/10 text-primary inline-flex rounded-full px-1.5 py-0.5 text-[10px] font-medium tracking-wide"
@@ -259,7 +246,7 @@
 													<span class="text-muted-foreground text-xs whitespace-nowrap">
 														{#if cell.inTime || cell.outTime}
 															{cell.inTime?.slice(0, 5) ?? '—'}–{cell.outTime?.slice(0, 5) ?? '—'}
-														{:else if !cell.wfh && !cell.lop && !day.weekend && !day.holiday}
+														{:else if !cell.wfh && !cell.lop}
 															—
 														{/if}
 													</span>

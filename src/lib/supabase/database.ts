@@ -210,6 +210,7 @@ export type Database = {
 					reports_to: string | null;
 					role: Database['public']['Enums']['app_role'] | null;
 					status: Database['public']['Enums']['access_status'];
+					timesheet_exempt: boolean;
 					updated_at: string;
 					vertical_id: string | null;
 				};
@@ -230,6 +231,7 @@ export type Database = {
 					reports_to?: string | null;
 					role?: Database['public']['Enums']['app_role'] | null;
 					status?: Database['public']['Enums']['access_status'];
+					timesheet_exempt?: boolean;
 					updated_at?: string;
 					vertical_id?: string | null;
 				};
@@ -250,6 +252,7 @@ export type Database = {
 					reports_to?: string | null;
 					role?: Database['public']['Enums']['app_role'] | null;
 					status?: Database['public']['Enums']['access_status'];
+					timesheet_exempt?: boolean;
 					updated_at?: string;
 					vertical_id?: string | null;
 				};
@@ -401,9 +404,14 @@ export type Database = {
 					next_designation: string | null;
 					next_earned: number | null;
 					next_employee_id?: string | null;
+					next_first_name?: string | null;
+					next_last_name?: string | null;
+					next_phone?: string | null;
+					next_present_address?: string | null;
 					next_reports_to: string | null;
 					next_role: string | null;
 					next_status: string;
+					next_timesheet_exempt?: boolean | null;
 					next_vertical_id: string | null;
 					target: string;
 				};
