@@ -1,5 +1,6 @@
-import { error, fail, redirect } from '@sveltejs/kit';
+import { clockedHours, formatHours } from '#lib/attendance/hours';
 import { setFlash } from '#lib/server/flash';
+import { error, fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 
 function todayIso() {
@@ -13,17 +14,31 @@ function normalizeTime(value: FormDataEntryValue | null) {
 	return `${raw}:00`;
 }
 
-export const load: PageServerLoad = async ({ locals }) => {
+function isValidWorkDate(value: string, today = todayIso()) {
+	if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+	return value <= today;
+}
+
+export const load: PageServerLoad = async ({ locals, url }) => {
 	if (!locals.claims || !locals.profile || locals.profile.status !== 'approved') {
 		error(401, 'Sign in required');
 	}
 
 	const userId = locals.claims.sub;
 	const today = todayIso();
+	const requestedDate = url.searchParams.get('date')?.trim() || today;
+	const selectedDate = isValidWorkDate(requestedDate, today) ? requestedDate : today;
+
+	const recentFrom = (() => {
+		const date = new Date(`${today}T00:00:00Z`);
+		date.setUTCDate(date.getUTCDate() - 29);
+		return date.toISOString().slice(0, 10);
+	})();
 
 	const [
 		{ data: profile },
-		{ data: todayAttendance },
+		{ data: selectedAttendance },
+		{ data: recentAttendance },
 		{ data: leaveRequests },
 		{ data: wfhRequests },
 		{ count: pendingLeaveCount },
@@ -39,8 +54,15 @@ export const load: PageServerLoad = async ({ locals }) => {
 			.from('attendance_days')
 			.select('id, work_date, in_time, out_time')
 			.eq('user_id', userId)
-			.eq('work_date', today)
+			.eq('work_date', selectedDate)
 			.maybeSingle(),
+		locals.supabase
+			.from('attendance_days')
+			.select('work_date, in_time, out_time')
+			.eq('user_id', userId)
+			.gte('work_date', recentFrom)
+			.lte('work_date', today)
+			.order('work_date', { ascending: false }),
 		locals.supabase
 			.from('leave_requests')
 			.select('id, leave_kind, start_date, end_date, day_count, status, created_at, reason')
@@ -70,8 +92,20 @@ export const load: PageServerLoad = async ({ locals }) => {
 			.eq('status', 'approved')
 	]);
 
+	const recentDays = (recentAttendance ?? []).map((day) => {
+		const hours = clockedHours(day.in_time, day.out_time);
+		return {
+			work_date: day.work_date,
+			in_time: day.in_time,
+			out_time: day.out_time,
+			hoursLabel: formatHours(hours)
+		};
+	});
+
 	return {
 		today,
+		selectedDate,
+		isToday: selectedDate === today,
 		profile: profile ?? {
 			casual_leave: 0,
 			earned_leave: 0,
@@ -79,7 +113,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 			employee_id: null,
 			designation: ''
 		},
-		todayAttendance,
+		selectedAttendance,
+		recentDays,
 		leaveRequests: leaveRequests ?? [],
 		wfhRequests: wfhRequests ?? [],
 		pendingApprovals: (pendingLeaveCount ?? 0) + (pendingWfhCount ?? 0),
@@ -89,21 +124,29 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 export const actions = {
 	saveTimes: async ({ request, cookies, locals }) => {
-		if (!locals.claims || !locals.profile || locals.profile.status !== 'approved') {
-			return fail(401, { error: 'Sign in required.', times: true });
-		}
-
 		const formData = await request.formData();
-		const workDate = String(formData.get('workDate') ?? '').trim() || todayIso();
+		const today = todayIso();
+		const workDate = String(formData.get('workDate') ?? '').trim() || today;
 		const inTime = normalizeTime(formData.get('inTime'));
 		const outTime = normalizeTime(formData.get('outTime'));
+		const values = { times: true as const, workDate };
 
-		if (!/^\d{4}-\d{2}-\d{2}$/.test(workDate)) {
-			return fail(400, { error: 'Choose a valid date.', times: true });
+		if (!locals.claims || !locals.profile || locals.profile.status !== 'approved') {
+			return fail(401, { error: 'Sign in required.', ...values });
+		}
+
+		if (!isValidWorkDate(workDate, today)) {
+			return fail(400, {
+				error: 'Choose today or an earlier date.',
+				...values
+			});
 		}
 
 		if (!inTime && !outTime) {
-			return fail(400, { error: 'Enter an in time or out time.', times: true });
+			return fail(400, {
+				error: 'Enter an in time or out time.',
+				...values
+			});
 		}
 
 		const { error: saveError } = await locals.supabase.rpc('upsert_attendance_day', {
@@ -118,11 +161,17 @@ export const actions = {
 					saveError.message?.includes('out time')
 						? 'Out time must be after in time.'
 						: 'Attendance times could not be saved.',
-				times: true
+				...values
 			});
 		}
 
-		setFlash(cookies, { type: 'success', message: 'Attendance times saved.' });
-		redirect(303, '/attendance');
+		setFlash(cookies, {
+			type: 'success',
+			message:
+				workDate === today
+					? 'Attendance times saved for today.'
+					: `Attendance times saved for ${workDate}.`
+		});
+		redirect(303, `/attendance?date=${workDate}`);
 	}
 } satisfies Actions;

@@ -1,9 +1,11 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import RequestStatusBadge from '#lib/components/attendance/request-status-badge.svelte';
 	import { Button } from '#lib/components/ui/button';
 	import { Card, CardContent, CardDescription, CardHeader } from '#lib/components/ui/card';
+	import { Input } from '#lib/components/ui/input';
 	import { Label } from '#lib/components/ui/label';
 	import TimeInput from '#lib/components/ui/time-input.svelte';
 	import CalendarDays from '@lucide/svelte/icons/calendar-days';
@@ -15,9 +17,21 @@
 	let { data, form }: PageProps = $props();
 
 	let savingTimes = $state(false);
+	let selectedDate = $state(data.selectedDate);
 
-	const inValue = $derived(data.todayAttendance?.in_time?.slice(0, 5) ?? '');
-	const outValue = $derived(data.todayAttendance?.out_time?.slice(0, 5) ?? '');
+	$effect(() => {
+		selectedDate = data.selectedDate;
+	});
+
+	const inValue = $derived(data.selectedAttendance?.in_time?.slice(0, 5) ?? '');
+	const outValue = $derived(data.selectedAttendance?.out_time?.slice(0, 5) ?? '');
+
+	function onDateChange(event: Event) {
+		const value = (event.currentTarget as HTMLInputElement).value;
+		if (!value) return;
+		selectedDate = value;
+		goto(`/attendance?date=${value}`, { replaceState: true });
+	}
 </script>
 
 <svelte:head>
@@ -57,7 +71,7 @@
 		</div>
 	</div>
 
-	<div class="grid gap-4 sm:grid-cols-2">
+	<div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
 		<Card>
 			<CardHeader>
 				<h2 class="text-foreground text-base font-medium">Leave balances</h2>
@@ -77,8 +91,12 @@
 
 		<Card>
 			<CardHeader>
-				<h2 class="text-foreground text-base font-medium">Today’s times</h2>
-				<CardDescription>{data.today}</CardDescription>
+				<h2 class="text-foreground text-base font-medium">
+					{data.isToday ? 'Today’s times' : 'Daily times'}
+				</h2>
+				<CardDescription>
+					Pick any past day or today to log or edit in/out times.
+				</CardDescription>
 			</CardHeader>
 			<CardContent>
 				<form
@@ -99,7 +117,20 @@
 						};
 					}}
 				>
-					<input type="hidden" name="workDate" value={data.today} />
+					<div class="flex flex-col gap-2">
+						<Label for="workDate">Date</Label>
+						<Input
+							id="workDate"
+							name="workDate"
+							type="date"
+							required
+							max={data.today}
+							value={form?.workDate ?? selectedDate}
+							class="h-11"
+							onchange={onDateChange}
+						/>
+					</div>
+
 					<div class="grid grid-cols-2 gap-3">
 						<div class="flex flex-col gap-2">
 							<Label for="inTime">In time</Label>
@@ -120,6 +151,43 @@
 			</CardContent>
 		</Card>
 	</div>
+
+	<Card>
+		<CardHeader>
+			<h2 class="text-foreground text-base font-medium">Recent days</h2>
+			<CardDescription>Last 30 days with logged times. Tap a day to edit.</CardDescription>
+		</CardHeader>
+		<CardContent>
+			{#if data.recentDays.length === 0}
+				<p class="text-muted-foreground text-sm">No attendance logged yet.</p>
+			{:else}
+				<ul class="divide-border divide-y">
+					{#each data.recentDays as day (day.work_date)}
+						<li>
+							<a
+								href={`/attendance?date=${day.work_date}`}
+								class="hover:bg-muted/40 flex items-center justify-between gap-3 py-2.5 first:pt-0 last:pb-0"
+								aria-current={day.work_date === data.selectedDate ? 'page' : undefined}
+							>
+								<div class="min-w-0">
+									<p class="text-foreground text-sm font-medium">
+										{day.work_date}
+										{#if day.work_date === data.today}
+											<span class="text-muted-foreground font-normal">· Today</span>
+										{/if}
+									</p>
+									<p class="text-muted-foreground text-xs">
+										{(day.in_time?.slice(0, 5) ?? '—') + ' → ' + (day.out_time?.slice(0, 5) ?? '—')}
+									</p>
+								</div>
+								<p class="text-foreground text-sm font-medium tabular-nums">{day.hoursLabel}</p>
+							</a>
+						</li>
+					{/each}
+				</ul>
+			{/if}
+		</CardContent>
+	</Card>
 
 	<div class="grid gap-4 lg:grid-cols-2">
 		<Card>
