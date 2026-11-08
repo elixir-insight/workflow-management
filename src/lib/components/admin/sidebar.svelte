@@ -147,11 +147,8 @@
 
 <div class="bg-sidebar text-sidebar-foreground flex h-full flex-col">
 	<div class="flex items-center gap-3 px-4 py-4">
-		<a
-			href={resolve(homeRoute)}
-			class="bg-primary-foreground dark:bg-foreground rounded-lg px-2 py-1.5"
-		>
-			<img src={logo} alt="ElixirPay" class="h-7 w-auto max-w-full" />
+		<a href={resolve(homeRoute)} class="rounded-lg px-1 py-1">
+			<img src={logo} alt="ElixirPay" class="h-8 w-auto max-w-full" />
 		</a>
 	</div>
 
