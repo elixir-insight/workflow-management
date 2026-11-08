@@ -35,7 +35,7 @@
 	<title>Approvals · ElixirPay</title>
 </svelte:head>
 
-<div class="flex flex-col gap-6">
+<div class="flex w-full max-w-full min-w-0 flex-col gap-6">
 	<nav class="text-muted-foreground text-sm">
 		<a href={resolve('/(app)/attendance')} class="text-foreground underline">Attendance</a>
 		<span aria-hidden="true"> / </span>

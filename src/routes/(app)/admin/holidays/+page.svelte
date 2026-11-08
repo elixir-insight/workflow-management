@@ -3,6 +3,7 @@
 	import { resolve } from '$app/paths';
 	import { Button } from '#lib/components/ui/button';
 	import { Card, CardContent, CardDescription, CardHeader } from '#lib/components/ui/card';
+	import DateInput from '#lib/components/ui/date-input.svelte';
 	import { Input } from '#lib/components/ui/input';
 	import { Label } from '#lib/components/ui/label';
 	import { toast } from 'svelte-sonner';
@@ -18,7 +19,7 @@
 	<title>Office holidays · ElixirPay</title>
 </svelte:head>
 
-<div class="flex flex-col gap-6">
+<div class="flex w-full max-w-full min-w-0 flex-col gap-6">
 	<p class="text-muted-foreground text-sm">
 		Mark company-wide office holidays. They appear as differentiated columns on the timesheet.
 		People can still log times on those dates.
@@ -49,15 +50,14 @@
 						};
 					}}
 				>
-					<div class="flex flex-col gap-2">
+					<div class="flex min-w-0 flex-col gap-2">
 						<Label for="holidayDate">Date</Label>
-						<Input
+						<DateInput
 							id="holidayDate"
 							name="holidayDate"
-							type="date"
 							required
 							value={form?.holidayDate ?? ''}
-							class="h-11"
+							class="h-11 rounded-xl"
 						/>
 					</div>
 

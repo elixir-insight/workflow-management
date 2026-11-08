@@ -5,7 +5,7 @@
 	import { clockedHours, formatHours } from '#lib/attendance/hours';
 	import RequestStatusBadge from '#lib/components/attendance/request-status-badge.svelte';
 	import { Button } from '#lib/components/ui/button';
-	import { Input } from '#lib/components/ui/input';
+	import DateInput from '#lib/components/ui/date-input.svelte';
 	import TimeInput from '#lib/components/ui/time-input.svelte';
 	import CalendarDays from '@lucide/svelte/icons/calendar-days';
 	import ChevronLeft from '@lucide/svelte/icons/chevron-left';
@@ -97,7 +97,7 @@
 	<title>Attendance · ElixirPay</title>
 </svelte:head>
 
-<div class="flex w-full flex-col gap-5 lg:gap-6">
+<div class="flex w-full max-w-full min-w-0 flex-col gap-5 lg:gap-6">
 	<div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between lg:gap-6">
 		<div class="flex min-w-0 flex-col gap-1">
 			<p class="text-muted-foreground text-sm leading-relaxed">
@@ -110,17 +110,28 @@
 			{/if}
 		</div>
 
-		<div class="flex flex-wrap gap-2">
-			<Button href={resolve('/(app)/attendance/leave')} variant="outline" class="h-10 rounded-xl">
+		<div class="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap">
+			<Button
+				href={resolve('/(app)/attendance/leave')}
+				variant="outline"
+				class="h-11 w-full rounded-xl sm:h-10 sm:w-auto"
+			>
 				<CalendarDays class="size-4" />
 				Apply leave
 			</Button>
-			<Button href={resolve('/(app)/attendance/wfh')} variant="outline" class="h-10 rounded-xl">
+			<Button
+				href={resolve('/(app)/attendance/wfh')}
+				variant="outline"
+				class="h-11 w-full rounded-xl sm:h-10 sm:w-auto"
+			>
 				<House class="size-4" />
 				WFH request
 			</Button>
 			{#if data.isManager || data.pendingApprovals > 0}
-				<Button href={resolve('/(app)/attendance/approvals')} class="h-10 rounded-xl">
+				<Button
+					href={resolve('/(app)/attendance/approvals')}
+					class="col-span-2 h-11 w-full rounded-xl sm:col-span-1 sm:h-10 sm:w-auto"
+				>
 					<ClipboardCheck class="size-4" />
 					Approvals
 					{#if data.pendingApprovals > 0}
@@ -193,7 +204,7 @@
 
 		<!-- Week strip (Remote / Jobber) -->
 		<div
-			class="flex gap-1.5 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+			class="scroll-x-contain flex gap-1.5 pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
 		>
 			{#each dayStrip as day (day.date)}
 				<button
@@ -257,9 +268,8 @@
 				<label for="workDate" class="text-muted-foreground text-xs font-medium tracking-wide uppercase">
 					Date
 				</label>
-				<Input
+				<DateInput
 					id="workDate"
-					type="date"
 					required
 					max={data.today}
 					value={workDate}

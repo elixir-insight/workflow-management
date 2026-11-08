@@ -32,10 +32,11 @@
 		}
 
 		input.focus();
+		input.click();
 	}
 </script>
 
-<div class="relative">
+<div class="relative min-w-0">
 	<input
 		bind:this={inputEl}
 		{id}
@@ -52,7 +53,7 @@
 	<button
 		type="button"
 		tabindex="-1"
-		class="text-muted-foreground hover:text-foreground absolute inset-y-0 right-0 z-10 flex w-10 items-center justify-center rounded-r-lg"
+		class="text-muted-foreground hover:text-foreground absolute inset-y-0 right-0 z-10 flex w-11 items-center justify-center rounded-r-lg"
 		aria-label="Choose time"
 		onclick={(event) => {
 			event.preventDefault();
@@ -66,6 +67,11 @@
 <style>
 	.time-input-field {
 		color-scheme: inherit;
+	}
+
+	.time-input-field::-webkit-date-and-time-value {
+		text-align: left;
+		min-height: 1.5em;
 	}
 
 	/* Stretch the native picker hit-target across the field where WebKit/Chromium expose it. */

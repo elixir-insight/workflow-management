@@ -94,7 +94,7 @@
 	<title>Timesheet · ElixirPay</title>
 </svelte:head>
 
-<div class="flex w-full flex-col gap-5 lg:gap-6">
+<div class="flex w-full max-w-full min-w-0 flex-col gap-5 lg:gap-6">
 	<div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between lg:gap-6">
 		<div class="flex min-w-0 flex-col gap-2">
 			<p class="text-muted-foreground text-sm leading-relaxed">
@@ -125,14 +125,18 @@
 			</div>
 		</div>
 
-		<div class="flex flex-wrap gap-2">
+		<div class="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap">
 			{#if data.canManageHolidays}
-				<Button href={resolve('/(app)/admin/holidays')} variant="outline" class="h-10 rounded-xl">
+				<Button
+					href={resolve('/(app)/admin/holidays')}
+					variant="outline"
+					class="h-11 w-full rounded-xl sm:h-10 sm:w-auto"
+				>
 					Office holidays
 				</Button>
 			{/if}
 			{#if data.selectedVertical}
-				<Button href={exportHref()} variant="outline" class="h-10 rounded-xl">
+				<Button href={exportHref()} variant="outline" class="h-11 w-full rounded-xl sm:h-10 sm:w-auto">
 					<Download class="size-4" />
 					Export CSV
 				</Button>
@@ -356,7 +360,7 @@
 
 			<!-- Desktop: month matrix with sticky employee (ClickUp / Deputy / 7shifts) -->
 			<div class="border-border hidden overflow-hidden rounded-2xl border lg:block">
-				<div class="overflow-x-auto">
+				<div class="scroll-x-contain rounded-b-2xl">
 					<table class="min-w-full border-collapse text-left text-sm">
 						<thead class="bg-muted/40">
 							<tr>

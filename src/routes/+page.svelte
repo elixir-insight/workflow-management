@@ -53,7 +53,7 @@
 	<title>Sign in · ElixirPay</title>
 </svelte:head>
 
-<main class="bg-white text-foreground flex min-h-dvh dark:bg-background">
+<main class="bg-white text-foreground flex min-h-dvh w-full min-w-0 overflow-x-clip dark:bg-background">
 	<aside
 		class="hidden min-h-dvh w-[52%] bg-white p-4 lg:flex xl:p-5 dark:bg-background"
 		aria-hidden="true"

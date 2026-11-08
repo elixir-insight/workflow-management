@@ -60,7 +60,7 @@
 	}
 </script>
 
-<div class="flex w-full flex-col gap-5 lg:gap-6">
+<div class="flex w-full max-w-full min-w-0 flex-col gap-5 lg:gap-6">
 	<div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between lg:gap-6">
 		<div class="flex min-w-0 flex-col gap-1">
 			<h2 class="text-foreground text-xl font-semibold tracking-tight lg:text-2xl">
@@ -80,21 +80,32 @@
 				{/if}
 			</p>
 		</div>
-		<div class="flex flex-wrap gap-2">
-			<Button href={resolve('/(app)/attendance')} class="h-10 rounded-xl">
+		<div class="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap">
+			<Button href={resolve('/(app)/attendance')} class="h-11 w-full rounded-xl sm:h-10 sm:w-auto">
 				<Clock3 class="size-4" />
 				Log times
 			</Button>
-			<Button href={resolve('/(app)/attendance/leave')} variant="outline" class="h-10 rounded-xl">
+			<Button
+				href={resolve('/(app)/attendance/leave')}
+				variant="outline"
+				class="h-11 w-full rounded-xl sm:h-10 sm:w-auto"
+			>
 				<CalendarDays class="size-4" />
 				Leave
 			</Button>
-			<Button href={resolve('/(app)/attendance/wfh')} variant="outline" class="h-10 rounded-xl">
+			<Button
+				href={resolve('/(app)/attendance/wfh')}
+				variant="outline"
+				class="h-11 w-full rounded-xl sm:h-10 sm:w-auto"
+			>
 				<House class="size-4" />
 				WFH
 			</Button>
 			{#if data.isManager || data.pendingApprovals > 0}
-				<Button href={resolve('/(app)/attendance/approvals')} class="h-10 rounded-xl">
+				<Button
+					href={resolve('/(app)/attendance/approvals')}
+					class="h-11 w-full rounded-xl sm:h-10 sm:w-auto"
+				>
 					<ClipboardCheck class="size-4" />
 					Approvals
 					{#if data.pendingApprovals > 0}
@@ -108,34 +119,34 @@
 	</div>
 
 	<section class="border-border bg-card overflow-hidden rounded-2xl border">
-		<div class="grid sm:grid-cols-2 lg:grid-cols-5">
-			<div class="border-border border-b p-4 sm:border-r sm:p-5 lg:border-b-0">
+		<div class="grid grid-cols-2 lg:grid-cols-5">
+			<div class="border-border border-b border-r p-4 lg:border-b-0 lg:p-5">
 				<p class="text-muted-foreground text-xs font-medium tracking-wide uppercase">Casual</p>
 				<p class="text-foreground mt-2 text-3xl font-semibold tracking-tight tabular-nums">
 					{data.profile.casual_leave}
 				</p>
 				<p class="text-muted-foreground mt-1.5 text-xs">Days available</p>
 			</div>
-			<div class="border-border border-b p-4 sm:p-5 lg:border-r lg:border-b-0">
+			<div class="border-border border-b p-4 lg:border-r lg:border-b-0 lg:p-5">
 				<p class="text-muted-foreground text-xs font-medium tracking-wide uppercase">Earned</p>
 				<p class="text-foreground mt-2 text-3xl font-semibold tracking-tight tabular-nums">
 					{data.profile.earned_leave}
 				</p>
 				<p class="text-muted-foreground mt-1.5 text-xs">Days available</p>
 			</div>
-			<div class="border-border border-b p-4 sm:border-r sm:border-b-0 sm:p-5 lg:border-b-0">
+			<div class="border-border border-b border-r p-4 lg:border-b-0 lg:p-5">
 				<p class="text-muted-foreground text-xs font-medium tracking-wide uppercase">In today</p>
 				<p class="text-foreground mt-2 text-3xl font-semibold tracking-tight tabular-nums">
 					{inValue ?? '—'}
 				</p>
 			</div>
-			<div class="border-border border-b p-4 sm:border-b-0 sm:p-5 lg:border-r">
+			<div class="border-border border-b p-4 lg:border-r lg:border-b-0 lg:p-5">
 				<p class="text-muted-foreground text-xs font-medium tracking-wide uppercase">Out today</p>
 				<p class="text-foreground mt-2 text-3xl font-semibold tracking-tight tabular-nums">
 					{outValue ?? '—'}
 				</p>
 			</div>
-			<div class="border-border col-span-full border-t p-4 sm:p-5 lg:col-span-1 lg:border-t-0">
+			<div class="border-border col-span-2 border-t p-4 lg:col-span-1 lg:border-t-0 lg:p-5">
 				<p class="text-muted-foreground text-xs font-medium tracking-wide uppercase">Hours today</p>
 				<p class="text-foreground mt-2 text-3xl font-semibold tracking-tight tabular-nums">
 					{todayHours}

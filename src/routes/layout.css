@@ -188,8 +188,54 @@
 		@apply border-border outline-ring/50;
 	}
 
+	html {
+		width: 100%;
+		max-width: 100%;
+		/* clip avoids page X-scroll without breaking position:sticky the way hidden can */
+		overflow-x: clip;
+		-webkit-text-size-adjust: 100%;
+		text-size-adjust: 100%;
+		touch-action: manipulation;
+	}
+
 	body {
 		@apply bg-background text-foreground font-sans;
 		letter-spacing: var(--tracking-normal);
+		width: 100%;
+		max-width: 100%;
+		min-width: 0;
+		overflow-x: clip;
+		min-height: 100vh;
+		min-height: 100dvh;
+		/* Avoid iOS rubber-band revealing page-level horizontal scroll. */
+		overscroll-behavior-x: none;
+	}
+
+	img,
+	video,
+	canvas {
+		max-width: 100%;
+		height: auto;
+	}
+
+	/* Keep native date/time fields usable on WebKit without zooming on focus. */
+	input[type='date'],
+	input[type='time'],
+	input[type='datetime-local'] {
+		font-size: 1rem;
+		max-width: 100%;
+		min-width: 0;
+	}
+
+	/*
+	 * Contained horizontal scrollers (day strips, chip rows, wide tables)
+	 * must not expand the page width or chain into document X-scroll.
+	 */
+	.scroll-x-contain {
+		max-width: 100%;
+		min-width: 0;
+		overflow-x: auto;
+		overscroll-behavior-x: contain;
+		-webkit-overflow-scrolling: touch;
 	}
 }

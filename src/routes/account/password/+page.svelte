@@ -20,7 +20,7 @@
 </svelte:head>
 
 <main
-	class="bg-background flex min-h-dvh flex-col items-center px-6 pt-[max(2rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))]"
+	class="bg-background flex min-h-dvh w-full max-w-full min-w-0 flex-col items-center overflow-x-clip px-6 pt-[max(2rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))]"
 >
 	<div class="flex w-full max-w-[24rem] flex-1 flex-col justify-center gap-9">
 		<img src={logo} alt="ElixirPay" class="h-9 w-auto max-w-46 object-contain" />

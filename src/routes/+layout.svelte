@@ -29,4 +29,6 @@
 {#if showThemeToggle}
 	<ThemeToggle />
 {/if}
-{@render children()}
+<div class="w-full max-w-full min-w-0 overflow-x-clip">
+	{@render children()}
+</div>

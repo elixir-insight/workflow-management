@@ -101,7 +101,7 @@
 	<title>Profile · ElixirPay</title>
 </svelte:head>
 
-<div class="flex w-full flex-col gap-5 lg:gap-6">
+<div class="flex w-full max-w-full min-w-0 flex-col gap-5 lg:gap-6">
 	<p class="text-muted-foreground text-sm leading-relaxed">
 		Update how you appear to your team, and keep your contact details current.
 	</p>

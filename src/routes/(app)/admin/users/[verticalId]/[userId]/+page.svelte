@@ -38,7 +38,7 @@
 	<title>{displayName} · User management · ElixirPay</title>
 </svelte:head>
 
-<div class="flex w-full flex-col gap-6">
+<div class="flex w-full max-w-full min-w-0 flex-col gap-6">
 	<a
 		href={resolve('/(app)/admin/users/[verticalId]', { verticalId: data.vertical.id })}
 		class="text-muted-foreground hover:text-foreground inline-flex w-fit items-center gap-1.5 text-sm transition-colors"

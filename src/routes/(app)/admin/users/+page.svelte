@@ -36,7 +36,7 @@
 	<title>User management · ElixirPay</title>
 </svelte:head>
 
-<div class="flex w-full flex-col gap-6">
+<div class="flex w-full max-w-full min-w-0 flex-col gap-6">
 	<div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between lg:gap-6">
 		<div class="flex min-w-0 flex-col gap-1">
 			<p class="text-muted-foreground text-sm leading-relaxed">

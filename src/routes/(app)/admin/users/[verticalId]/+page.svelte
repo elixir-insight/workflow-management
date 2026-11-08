@@ -58,7 +58,7 @@
 	<title>{data.vertical.name} · User management · ElixirPay</title>
 </svelte:head>
 
-<div class="flex w-full flex-col gap-5 lg:gap-6">
+<div class="flex w-full max-w-full min-w-0 flex-col gap-5 lg:gap-6">
 	<a
 		href={resolve('/(app)/admin/users')}
 		class="text-muted-foreground hover:text-foreground inline-flex w-fit items-center gap-1.5 text-sm transition-colors"
@@ -93,7 +93,7 @@
 	</div>
 
 	<div
-		class="flex gap-2 overflow-x-auto pb-0.5 lg:overflow-visible [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+		class="scroll-x-contain flex gap-2 pb-0.5 lg:overflow-visible [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
 	>
 		{#each filters as filter (filter.id)}
 			<button

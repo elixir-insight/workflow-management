@@ -25,9 +25,9 @@
 	});
 </script>
 
-<div class="bg-muted/40 flex min-h-dvh">
-	<aside class="border-sidebar-border bg-sidebar hidden w-64 shrink-0 border-r lg:block">
-		<div class="sticky top-0 h-dvh">
+<div class="bg-muted/40 flex min-h-dvh w-full max-w-full min-w-0 overflow-x-clip">
+	<aside class="border-sidebar-border bg-sidebar hidden w-64 max-w-full shrink-0 border-r lg:block">
+		<div class="sticky top-0 h-dvh max-h-dvh overflow-y-auto overscroll-contain">
 			{#if data.session}
 				<AppSidebar
 					email={data.session.email}
@@ -40,14 +40,14 @@
 		</div>
 	</aside>
 
-	<div class="flex min-w-0 flex-1 flex-col">
+	<div class="flex w-full max-w-full min-w-0 flex-1 flex-col overflow-x-clip">
 		<header
-			class="border-border/80 bg-background/80 sticky top-0 z-20 flex h-14 items-center gap-3 border-b px-4 backdrop-blur-md md:h-16 md:px-6 lg:px-8"
+			class="border-border/80 bg-background/80 sticky top-0 z-20 flex min-h-14 w-full max-w-full min-w-0 items-center gap-2 overflow-x-clip border-b px-3 pt-[env(safe-area-inset-top)] backdrop-blur-md sm:gap-3 sm:px-4 md:min-h-16 md:px-6 lg:px-8"
 		>
 			<Button
 				variant="outline"
 				size="icon"
-				class="rounded-xl lg:hidden"
+				class="size-10 shrink-0 rounded-xl lg:hidden"
 				aria-label="Open menu"
 				aria-expanded={menuOpen}
 				onclick={() => (menuOpen = true)}
@@ -55,22 +55,28 @@
 				<Menu class="size-4" />
 			</Button>
 
-			<Sheet.Root bind:open={menuOpen}>
-				<Sheet.Content side="left" class="bg-sidebar w-72 p-0 sm:max-w-xs" showCloseButton={false}>
-					{#if data.session}
-						<AppSidebar
-							email={data.session.email}
-							role={data.session.role}
-							firstName={data.session.firstName}
-							lastName={data.session.lastName}
-							avatarUrl={data.session.avatarUrl}
-						/>
-					{/if}
-				</Sheet.Content>
-			</Sheet.Root>
+			{#if menuOpen}
+				<Sheet.Root bind:open={menuOpen}>
+					<Sheet.Content
+						side="left"
+						class="bg-sidebar w-[min(18rem,calc(100%-2.5rem))] max-w-full p-0"
+						showCloseButton={false}
+					>
+						{#if data.session}
+							<AppSidebar
+								email={data.session.email}
+								role={data.session.role}
+								firstName={data.session.firstName}
+								lastName={data.session.lastName}
+								avatarUrl={data.session.avatarUrl}
+							/>
+						{/if}
+					</Sheet.Content>
+				</Sheet.Root>
+			{/if}
 
-			<div class="min-w-0 flex-1">
-				<p class="text-muted-foreground text-[11px] font-medium tracking-wide uppercase">
+			<div class="min-w-0 flex-1 overflow-hidden">
+				<p class="text-muted-foreground truncate text-[11px] font-medium tracking-wide uppercase">
 					ElixirPay
 				</p>
 				<h1 class="text-foreground truncate text-base font-semibold tracking-tight md:text-lg">
@@ -85,12 +91,12 @@
 		</header>
 
 		<main
-			class="relative flex-1 px-4 py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] md:px-6 md:py-6 lg:px-8 lg:py-8"
+			class="relative w-full max-w-full min-w-0 flex-1 overflow-x-clip px-3 py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:px-4 md:px-6 md:py-6 lg:px-8 lg:py-8"
 			aria-busy={isNavigating}
 		>
 			<div
 				class={[
-					'mx-auto w-full max-w-7xl transition-opacity duration-150',
+					'mx-auto w-full max-w-7xl min-w-0 overflow-x-clip transition-opacity duration-150',
 					isNavigating && 'pointer-events-none opacity-40'
 				]}
 			>

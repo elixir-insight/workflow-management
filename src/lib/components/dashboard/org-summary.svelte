@@ -35,22 +35,30 @@
 	);
 </script>
 
-<div class="flex w-full flex-col gap-5 lg:gap-6">
+<div class="flex w-full max-w-full min-w-0 flex-col gap-5 lg:gap-6">
 	<div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between lg:gap-6">
 		<div class="flex min-w-0 flex-col gap-1">
 			<p class="text-muted-foreground text-sm leading-relaxed">{greeting}</p>
 		</div>
-		<div class="flex flex-wrap gap-2">
-			<Button href={resolve('/(app)/admin/users')} class="h-10 rounded-xl">
+		<div class="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap">
+			<Button href={resolve('/(app)/admin/users')} class="h-11 w-full rounded-xl sm:h-10 sm:w-auto">
 				<Users class="size-4" />
 				User management
 			</Button>
-			<Button href={resolve('/(app)/timesheet')} variant="outline" class="h-10 rounded-xl">
+			<Button
+				href={resolve('/(app)/timesheet')}
+				variant="outline"
+				class="h-11 w-full rounded-xl sm:h-10 sm:w-auto"
+			>
 				<ClipboardList class="size-4" />
 				Timesheet
 			</Button>
 			{#if showAttendance}
-				<Button href={resolve('/(app)/attendance')} variant="outline" class="h-10 rounded-xl">
+				<Button
+					href={resolve('/(app)/attendance')}
+					variant="outline"
+					class="col-span-2 h-11 w-full rounded-xl sm:col-span-1 sm:h-10 sm:w-auto"
+				>
 					Attendance
 				</Button>
 			{/if}

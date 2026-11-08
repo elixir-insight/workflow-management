@@ -5,7 +5,7 @@
 	import RequestStatusBadge from '#lib/components/attendance/request-status-badge.svelte';
 	import { Button } from '#lib/components/ui/button';
 	import { Card, CardContent, CardDescription, CardHeader } from '#lib/components/ui/card';
-	import { Input } from '#lib/components/ui/input';
+	import DateInput from '#lib/components/ui/date-input.svelte';
 	import { Label } from '#lib/components/ui/label';
 	import { profileDisplayName } from '#lib/profile/display';
 	import Copy from '@lucide/svelte/icons/copy';
@@ -43,7 +43,7 @@
 	<title>WFH request · ElixirPay</title>
 </svelte:head>
 
-<div class="flex flex-col gap-6">
+<div class="flex w-full max-w-full min-w-0 flex-col gap-6">
 	<nav class="text-muted-foreground text-sm">
 		<a href={resolve('/(app)/attendance')} class="text-foreground underline">Attendance</a>
 		<span aria-hidden="true"> / </span>
@@ -82,15 +82,14 @@
 						};
 					}}
 				>
-					<div class="flex flex-col gap-2">
+					<div class="flex min-w-0 flex-col gap-2">
 						<Label for="workDate">Date</Label>
-						<Input
+						<DateInput
 							id="workDate"
 							name="workDate"
-							type="date"
 							required
 							value={form?.workDate ?? ''}
-							class="h-11"
+							class="h-11 rounded-xl"
 						/>
 					</div>
 

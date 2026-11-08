@@ -33,8 +33,8 @@
 </script>
 
 <div
-	class="border-border bg-muted text-foreground shadow-sm flex h-11 items-center gap-2 rounded-lg border px-3 dark:bg-card dark:shadow-none {fixed
-		? 'fixed top-[max(0.75rem,env(safe-area-inset-top))] right-4 z-10'
+	class="border-border bg-muted text-foreground shadow-sm flex h-11 max-w-full shrink-0 items-center gap-2 rounded-lg border px-3 dark:bg-card dark:shadow-none {fixed
+		? 'fixed top-[max(0.75rem,env(safe-area-inset-top))] right-[max(1rem,env(safe-area-inset-right))] z-10'
 		: ''} {className}"
 >
 	<Sun class="size-4 {dark ? 'opacity-40' : ''}" aria-hidden="true" />
