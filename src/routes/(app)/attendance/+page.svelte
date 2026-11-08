@@ -204,7 +204,7 @@
 
 		<!-- Week strip (Remote / Jobber) -->
 		<div
-			class="scroll-x-contain flex gap-1.5 pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+			class="scroll-x-contain flex gap-1.5 pb-0.5 [-ms-overflow-style:none] scrollbar-none [&::-webkit-scrollbar]:hidden"
 		>
 			{#each dayStrip as day (day.date)}
 				<button

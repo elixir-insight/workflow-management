@@ -3,7 +3,8 @@
         "Elixirpay",
         "shadcn",
         "supabase",
-        "timesheet"
+        "timesheet",
+        "Vanta"
     ],
     "files.associations": {
         "*.css": "tailwindcss"

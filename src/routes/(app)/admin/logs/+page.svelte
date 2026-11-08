@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
+	import type { ResolvedPathname } from '$app/types';
 	import {
 		auditActionLabel,
 		auditFieldLabel,
@@ -10,6 +11,7 @@
 	import UserAvatar from '#lib/components/user-avatar.svelte';
 	import type { Json } from '#lib/supabase/database';
 	import Search from '@lucide/svelte/icons/search';
+	import { SvelteURLSearchParams } from 'svelte/reactivity';
 	import type { PageProps } from './$types';
 	import type { LogCategory } from './+page.server';
 
@@ -62,14 +64,18 @@
 		)
 	);
 
-	function logsHref(next: { page?: number; category?: LogCategory }) {
-		const params = new URLSearchParams();
+	function logsQuery(next: { page?: number; category?: LogCategory }) {
+		const params = new SvelteURLSearchParams();
 		const page = next.page ?? data.page;
 		const category = next.category ?? data.category;
 		if (page > 1) params.set('page', String(page));
 		if (category !== 'all') params.set('category', category);
 		const qs = params.toString();
-		return resolve('/(app)/admin/logs') + (qs ? `?${qs}` : '');
+		return qs ? `?${qs}` : '';
+	}
+
+	function logsHref(next: { page?: number; category?: LogCategory }): ResolvedPathname {
+		return `${resolve('/(app)/admin/logs')}${logsQuery(next)}` as ResolvedPathname;
 	}
 
 	function changeEntries(changes: Json) {
@@ -119,8 +125,7 @@
 		if (Number.isNaN(date.getTime())) return iso;
 
 		const today = new Date();
-		const yesterday = new Date();
-		yesterday.setDate(today.getDate() - 1);
+		const yesterday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
 
 		const sameDay = (a: Date, b: Date) =>
 			a.getFullYear() === b.getFullYear() &&
@@ -174,11 +179,11 @@
 	</div>
 
 	<div
-		class="scroll-x-contain flex gap-2 pb-0.5 lg:overflow-visible [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+		class="scroll-x-contain flex gap-2 pb-0.5 lg:overflow-visible [-ms-overflow-style:none] scrollbar-none [&::-webkit-scrollbar]:hidden"
 	>
 		{#each filters as filter (filter.id)}
 			<a
-				href={logsHref({ category: filter.id, page: 1 })}
+				href="{resolve('/(app)/admin/logs')}{logsQuery({ category: filter.id, page: 1 })}"
 				class={[
 					'inline-flex h-9 shrink-0 items-center rounded-full px-3.5 text-sm font-medium transition-colors',
 					data.category === filter.id

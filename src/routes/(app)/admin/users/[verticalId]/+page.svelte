@@ -93,7 +93,7 @@
 	</div>
 
 	<div
-		class="scroll-x-contain flex gap-2 pb-0.5 lg:overflow-visible [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+		class="scroll-x-contain flex gap-2 pb-0.5 lg:overflow-visible [-ms-overflow-style:none] scrollbar-none [&::-webkit-scrollbar]:hidden"
 	>
 		{#each filters as filter (filter.id)}
 			<button
