@@ -46,14 +46,14 @@
 	let saving = $state(false);
 
 	const fieldClass =
-		'border-input bg-background text-foreground h-11 w-full rounded-lg border px-2.5 text-base outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-3 md:text-sm';
+		'border-input bg-background text-foreground h-11 w-full rounded-xl border px-3 text-base outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-3 md:text-sm';
 	const readonlyClass = `${fieldClass} bg-muted/40 text-muted-foreground`;
 </script>
 
 <form
 	method="POST"
 	{action}
-	class="flex flex-col gap-4"
+	class="flex flex-col gap-6"
 	use:enhance={() => {
 		saving = true;
 		return async ({ result, update }) => {
@@ -84,213 +84,244 @@
 		<input type="hidden" name="timesheetExempt" value={profile.timesheet_exempt ? 'true' : 'false'} />
 	{/if}
 
-	{#if canEditAll}
+	<section class="flex flex-col gap-4">
+		<div>
+			<h3 class="text-foreground text-sm font-semibold">Personal</h3>
+			<p class="text-muted-foreground mt-0.5 text-xs">Name and contact details.</p>
+		</div>
+
+		{#if canEditAll}
+			<div class="grid gap-4 sm:grid-cols-2">
+				<div class="flex flex-col gap-2">
+					<Label for="firstName">First name</Label>
+					<Input id="firstName" name="firstName" value={profile.first_name} class="h-11 rounded-xl" />
+				</div>
+				<div class="flex flex-col gap-2">
+					<Label for="lastName">Last name</Label>
+					<Input id="lastName" name="lastName" value={profile.last_name} class="h-11 rounded-xl" />
+				</div>
+			</div>
+
+			<div class="flex flex-col gap-2">
+				<Label for="phone">Phone number</Label>
+				<Input id="phone" name="phone" type="tel" value={profile.phone} class="h-11 rounded-xl" />
+			</div>
+
+			<div class="flex flex-col gap-2">
+				<Label for="presentAddress">Present address</Label>
+				<textarea
+					id="presentAddress"
+					name="presentAddress"
+					rows="3"
+					class="border-input bg-background text-foreground focus-visible:border-ring focus-visible:ring-ring/50 w-full rounded-xl border px-3 py-2.5 text-base outline-none focus-visible:ring-3 md:text-sm"
+				>{profile.present_address}</textarea>
+			</div>
+		{:else}
+			<div class="grid gap-4 sm:grid-cols-2">
+				<div class="flex flex-col gap-2">
+					<Label for="firstNameReadonly">First name</Label>
+					<Input
+						id="firstNameReadonly"
+						value={profile.first_name}
+						readonly
+						class="h-11 rounded-xl bg-muted/40 text-muted-foreground"
+					/>
+				</div>
+				<div class="flex flex-col gap-2">
+					<Label for="lastNameReadonly">Last name</Label>
+					<Input
+						id="lastNameReadonly"
+						value={profile.last_name}
+						readonly
+						class="h-11 rounded-xl bg-muted/40 text-muted-foreground"
+					/>
+				</div>
+			</div>
+		{/if}
+	</section>
+
+	<section class="border-border flex flex-col gap-4 border-t pt-6">
+		<div>
+			<h3 class="text-foreground text-sm font-semibold">Access & role</h3>
+			<p class="text-muted-foreground mt-0.5 text-xs">Permissions, team, and reporting line.</p>
+		</div>
+
+		<div class="flex flex-col gap-2">
+			<Label for="status" class="flex items-center gap-2">
+				Access
+				<StatusDot status={profile.status} />
+			</Label>
+			<select
+				id="status"
+				name={canEditAll ? 'status' : undefined}
+				required={canEditAll}
+				disabled={!canEditAll}
+				class={canEditAll ? fieldClass : readonlyClass}
+				value={profile.status}
+			>
+				{#each accessStatuses as status (status)}
+					<option value={status}>{accessStatusLabels[status]}</option>
+				{/each}
+			</select>
+		</div>
+
 		<div class="grid gap-4 sm:grid-cols-2">
 			<div class="flex flex-col gap-2">
-				<Label for="firstName">First name</Label>
-				<Input id="firstName" name="firstName" value={profile.first_name} class="h-11" />
+				<Label for="verticalId">Vertical</Label>
+				<select
+					id="verticalId"
+					name={canEditAll ? 'verticalId' : undefined}
+					disabled={!canEditAll}
+					class={canEditAll ? fieldClass : readonlyClass}
+					value={profile.vertical_id ?? ''}
+				>
+					<option value="">Unassigned</option>
+					{#each verticals as vertical (vertical.id)}
+						<option value={vertical.id}>{vertical.name}</option>
+					{/each}
+				</select>
 			</div>
+
 			<div class="flex flex-col gap-2">
-				<Label for="lastName">Last name</Label>
-				<Input id="lastName" name="lastName" value={profile.last_name} class="h-11" />
+				<Label for="role">Role</Label>
+				<select
+					id="role"
+					name={canEditAll ? 'role' : undefined}
+					disabled={!canEditAll}
+					class={canEditAll ? fieldClass : readonlyClass}
+					value={profile.role ?? ''}
+				>
+					<option value="">None</option>
+					{#each roles as role (role)}
+						<option value={role}>{roleLabels[role]}</option>
+					{/each}
+				</select>
 			</div>
 		</div>
 
 		<div class="flex flex-col gap-2">
-			<Label for="phone">Phone number</Label>
-			<Input id="phone" name="phone" type="tel" value={profile.phone} class="h-11" />
+			<Label for="reportsTo">Reports to</Label>
+			<select
+				id="reportsTo"
+				name={canEditAll ? 'reportsTo' : undefined}
+				disabled={!canEditAll}
+				class={canEditAll ? fieldClass : readonlyClass}
+				value={profile.reports_to ?? ''}
+			>
+				<option value="">No one</option>
+				{#each managers as manager (manager.id)}
+					<option value={manager.id}>
+						{manager.email}{manager.designation ? ` · ${manager.designation}` : ''}
+					</option>
+				{/each}
+			</select>
+			<p class="text-muted-foreground text-xs leading-relaxed">
+				If set, leave and WFH need this person’s approval. If empty, leave and WFH are recorded
+				immediately.
+			</p>
+		</div>
+	</section>
+
+	<section class="border-border flex flex-col gap-4 border-t pt-6">
+		<div>
+			<h3 class="text-foreground text-sm font-semibold">Employment</h3>
+			<p class="text-muted-foreground mt-0.5 text-xs">IDs, designation, and timesheet rules.</p>
 		</div>
 
-		<div class="flex flex-col gap-2">
-			<Label for="presentAddress">Present address</Label>
-			<textarea
-				id="presentAddress"
-				name="presentAddress"
-				rows="3"
-				class="border-input bg-background text-foreground focus-visible:border-ring focus-visible:ring-ring/50 w-full rounded-lg border px-2.5 py-2 text-base outline-none focus-visible:ring-3 md:text-sm"
-			>{profile.present_address}</textarea>
-		</div>
-	{:else}
 		<div class="grid gap-4 sm:grid-cols-2">
 			<div class="flex flex-col gap-2">
-				<Label for="firstNameReadonly">First name</Label>
+				<Label for="employeeId">
+					Employee ID
+					<span class="text-muted-foreground font-normal">(optional)</span>
+				</Label>
 				<Input
-					id="firstNameReadonly"
-					value={profile.first_name}
-					readonly
-					class="h-11 bg-muted/40 text-muted-foreground"
+					id="employeeId"
+					name={canEditAll ? 'employeeId' : undefined}
+					value={profile.employee_id ?? ''}
+					placeholder="Unique organisation ID"
+					autocomplete="off"
+					readonly={!canEditAll}
+					class={canEditAll ? 'h-11 rounded-xl' : 'h-11 rounded-xl bg-muted/40 text-muted-foreground'}
 				/>
 			</div>
+
 			<div class="flex flex-col gap-2">
-				<Label for="lastNameReadonly">Last name</Label>
+				<Label for="designation">Designation</Label>
 				<Input
-					id="lastNameReadonly"
-					value={profile.last_name}
-					readonly
-					class="h-11 bg-muted/40 text-muted-foreground"
+					id="designation"
+					name={canEditAll ? 'designation' : undefined}
+					value={profile.designation}
+					readonly={!canEditAll}
+					class={canEditAll ? 'h-11 rounded-xl' : 'h-11 rounded-xl bg-muted/40 text-muted-foreground'}
 				/>
 			</div>
 		</div>
-	{/if}
 
-	<div class="flex flex-col gap-2">
-		<Label for="status" class="flex items-center gap-2">
-			Access
-			<StatusDot status={profile.status} />
-		</Label>
-		<select
-			id="status"
-			name={canEditAll ? 'status' : undefined}
-			required={canEditAll}
-			disabled={!canEditAll}
-			class={canEditAll ? fieldClass : readonlyClass}
-			value={profile.status}
-		>
-			{#each accessStatuses as status (status)}
-				<option value={status}>{accessStatusLabels[status]}</option>
-			{/each}
-		</select>
-	</div>
-
-	<div class="flex flex-col gap-2">
-		<Label for="verticalId">Vertical</Label>
-		<select
-			id="verticalId"
-			name={canEditAll ? 'verticalId' : undefined}
-			disabled={!canEditAll}
-			class={canEditAll ? fieldClass : readonlyClass}
-			value={profile.vertical_id ?? ''}
-		>
-			<option value="">Unassigned</option>
-			{#each verticals as vertical (vertical.id)}
-				<option value={vertical.id}>{vertical.name}</option>
-			{/each}
-		</select>
-	</div>
-
-	<div class="flex flex-col gap-2">
-		<Label for="role">Role</Label>
-		<select
-			id="role"
-			name={canEditAll ? 'role' : undefined}
-			disabled={!canEditAll}
-			class={canEditAll ? fieldClass : readonlyClass}
-			value={profile.role ?? ''}
-		>
-			<option value="">None</option>
-			{#each roles as role (role)}
-				<option value={role}>{roleLabels[role]}</option>
-			{/each}
-		</select>
-	</div>
-
-	<div class="flex flex-col gap-2">
-		<Label for="reportsTo">Reports to</Label>
-		<select
-			id="reportsTo"
-			name={canEditAll ? 'reportsTo' : undefined}
-			disabled={!canEditAll}
-			class={canEditAll ? fieldClass : readonlyClass}
-			value={profile.reports_to ?? ''}
-		>
-			<option value="">No one</option>
-			{#each managers as manager (manager.id)}
-				<option value={manager.id}>
-					{manager.email}{manager.designation ? ` · ${manager.designation}` : ''}
-				</option>
-			{/each}
-		</select>
-		<p class="text-muted-foreground text-xs">
-			If set, leave and WFH need this person’s approval. If empty, leave and WFH are recorded
-			immediately.
-		</p>
-	</div>
-
-	<div class="flex flex-col gap-2">
-		<Label for="employeeId">
-			Employee ID
-			<span class="text-muted-foreground font-normal">(optional)</span>
-		</Label>
-		<Input
-			id="employeeId"
-			name={canEditAll ? 'employeeId' : undefined}
-			value={profile.employee_id ?? ''}
-			placeholder="Unique organisation ID"
-			autocomplete="off"
-			readonly={!canEditAll}
-			class={canEditAll ? 'h-11' : 'h-11 bg-muted/40 text-muted-foreground'}
-		/>
-	</div>
-
-	<div class="flex flex-col gap-2">
-		<Label for="designation">Designation</Label>
-		<Input
-			id="designation"
-			name={canEditAll ? 'designation' : undefined}
-			value={profile.designation}
-			readonly={!canEditAll}
-			class={canEditAll ? 'h-11' : 'h-11 bg-muted/40 text-muted-foreground'}
-		/>
-	</div>
-
-	{#if canEditAll}
-		<label class="border-border flex items-start gap-3 rounded-lg border p-3">
-			<input
-				type="checkbox"
-				name="timesheetExempt"
-				value="true"
-				checked={profile.timesheet_exempt}
-				class="border-input mt-1 size-4 rounded"
-			/>
-			<span>
-				<span class="text-foreground text-sm font-medium">Exempt from timesheet</span>
-				<span class="text-muted-foreground mt-0.5 block text-xs">
-					Hide this person from the monthly timesheet grid and CSV export.
+		{#if canEditAll}
+			<label class="border-border bg-muted/20 flex items-start gap-3 rounded-xl border p-3.5">
+				<input
+					type="checkbox"
+					name="timesheetExempt"
+					value="true"
+					checked={profile.timesheet_exempt}
+					class="border-input mt-1 size-4 rounded"
+				/>
+				<span>
+					<span class="text-foreground text-sm font-medium">Exempt from timesheet</span>
+					<span class="text-muted-foreground mt-0.5 block text-xs leading-relaxed">
+						Hide this person from the monthly timesheet grid and CSV export.
+					</span>
 				</span>
-			</span>
-		</label>
-	{:else if profile.timesheet_exempt}
-		<p class="text-muted-foreground text-sm">This person is exempt from the timesheet.</p>
-	{/if}
+			</label>
+		{:else if profile.timesheet_exempt}
+			<p class="text-muted-foreground text-sm">This person is exempt from the timesheet.</p>
+		{/if}
+	</section>
 
-	<fieldset class="grid grid-cols-2 gap-3">
-		<legend class="text-foreground mb-2 text-sm font-medium">
-			Leave balances
-			{#if !canEditAll}
-				<span class="text-muted-foreground font-normal"> · editable</span>
-			{/if}
-		</legend>
-		<div class="flex flex-col gap-2">
-			<Label for="casualLeave">Casual</Label>
-			<Input
-				id="casualLeave"
-				name="casualLeave"
-				type="number"
-				min="0"
-				step="0.5"
-				value={profile.casual_leave}
-				class="h-11"
-			/>
+	<section class="border-border flex flex-col gap-4 border-t pt-6">
+		<div>
+			<h3 class="text-foreground text-sm font-semibold">
+				Leave balances
+				{#if !canEditAll}
+					<span class="text-muted-foreground font-normal"> · editable</span>
+				{/if}
+			</h3>
+			<p class="text-muted-foreground mt-0.5 text-xs">Days available for this person.</p>
 		</div>
-		<div class="flex flex-col gap-2">
-			<Label for="earnedLeave">Earned</Label>
-			<Input
-				id="earnedLeave"
-				name="earnedLeave"
-				type="number"
-				min="0"
-				step="0.5"
-				value={profile.earned_leave}
-				class="h-11"
-			/>
+
+		<div class="grid grid-cols-2 gap-3">
+			<div class="flex flex-col gap-2">
+				<Label for="casualLeave">Casual</Label>
+				<Input
+					id="casualLeave"
+					name="casualLeave"
+					type="number"
+					min="0"
+					step="0.5"
+					value={profile.casual_leave}
+					class="h-11 rounded-xl"
+				/>
+			</div>
+			<div class="flex flex-col gap-2">
+				<Label for="earnedLeave">Earned</Label>
+				<Input
+					id="earnedLeave"
+					name="earnedLeave"
+					type="number"
+					min="0"
+					step="0.5"
+					value={profile.earned_leave}
+					class="h-11 rounded-xl"
+				/>
+			</div>
 		</div>
-	</fieldset>
+	</section>
 
 	{#if error}
 		<p role="alert" class="text-destructive text-sm">{error}</p>
 	{/if}
 
-	<Button type="submit" class="h-11 w-full" disabled={saving}>
-		{saving ? 'Saving…' : canEditAll ? 'Save' : 'Save leave balances'}
+	<Button type="submit" class="h-11 w-full rounded-xl" disabled={saving}>
+		{saving ? 'Saving…' : canEditAll ? 'Save changes' : 'Save leave balances'}
 	</Button>
 </form>
