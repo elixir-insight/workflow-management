@@ -7,7 +7,7 @@ import {
 	type OfficeHoliday,
 	type TimesheetDayEntry,
 	type TimesheetEmployee,
-	type TimesheetLopEntry,
+	type TimesheetLeaveEntry,
 	type TimesheetWfhEntry
 } from '#lib/attendance/timesheet';
 import { error } from '@sveltejs/kit';
@@ -58,13 +58,13 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 
 	let entries: TimesheetDayEntry[] = [];
 	let wfhEntries: TimesheetWfhEntry[] = [];
-	let lopEntries: TimesheetLopEntry[] = [];
+	let leaveEntries: TimesheetLeaveEntry[] = [];
 
 	if (employeeIds.length > 0) {
 		const [
 			{ data: attendance, error: attendanceError },
 			{ data: wfhRows, error: wfhError },
-			{ data: lopRows, error: lopError }
+			{ data: leaveRows, error: leaveError }
 		] = await Promise.all([
 			locals.supabase
 				.from('attendance_days')
@@ -81,21 +81,21 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 				.lte('work_date', bounds.endDate),
 			locals.supabase
 				.from('leave_requests')
-				.select('user_id, start_date, end_date')
+				.select('user_id, start_date, end_date, leave_kind')
 				.in('user_id', employeeIds)
 				.eq('status', 'approved')
-				.eq('leave_kind', 'lop')
+				.in('leave_kind', ['casual', 'earned', 'lop'])
 				.lte('start_date', bounds.endDate)
 				.gte('end_date', bounds.startDate)
 		]);
 
-		if (attendanceError || wfhError || lopError) {
+		if (attendanceError || wfhError || leaveError) {
 			error(500, 'Timesheet data could not be loaded.');
 		}
 
 		entries = (attendance ?? []) as TimesheetDayEntry[];
 		wfhEntries = (wfhRows ?? []) as TimesheetWfhEntry[];
-		lopEntries = (lopRows ?? []) as TimesheetLopEntry[];
+		leaveEntries = (leaveRows ?? []) as TimesheetLeaveEntry[];
 	}
 
 	const rows = buildTimesheetMatrix(
@@ -103,7 +103,7 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 		bounds.days,
 		entries,
 		wfhEntries,
-		lopEntries,
+		leaveEntries,
 		dayMeta
 	);
 	const safeName = vertical.name.replace(/[^\w.-]+/g, '_');

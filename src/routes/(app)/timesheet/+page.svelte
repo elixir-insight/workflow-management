@@ -118,10 +118,17 @@
 					Holiday
 				</span>
 				<span
+					class="inline-flex items-center rounded-full bg-sky-500/10 px-2 py-0.5 font-medium text-sky-700 dark:text-sky-300"
+				>
+					Leave
+				</span>
+				<span class="text-muted-foreground">Casual / earned</span>
+				<span
 					class="inline-flex items-center rounded-full bg-rose-500/10 px-2 py-0.5 font-medium text-rose-700 dark:text-rose-300"
 				>
 					LOP
 				</span>
+				<span class="text-muted-foreground">No leave balance</span>
 			</div>
 		</div>
 
@@ -329,13 +336,20 @@
 										{:else if day.weekend}
 											<p class="text-muted-foreground mt-0.5 text-xs">Weekend</p>
 										{/if}
-										{#if cell.wfh || cell.lop}
+										{#if cell.wfh || cell.leave || cell.lop}
 											<div class="mt-1.5 flex flex-wrap gap-1.5">
 												{#if cell.wfh}
 													<span
 														class="bg-primary/10 text-primary inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium"
 													>
 														WFH
+													</span>
+												{/if}
+												{#if cell.leave}
+													<span
+														class="inline-flex rounded-full bg-sky-500/10 px-2 py-0.5 text-[10px] font-medium text-sky-700 dark:text-sky-300"
+													>
+														Leave
 													</span>
 												{/if}
 												{#if cell.lop}
@@ -442,6 +456,13 @@
 														WFH
 													</span>
 												{/if}
+												{#if cell.leave}
+													<span
+														class="inline-flex rounded-full bg-sky-500/10 px-1.5 py-0.5 text-[9px] font-medium tracking-wide text-sky-700 dark:text-sky-300"
+													>
+														Leave
+													</span>
+												{/if}
 												{#if cell.lop}
 													<span
 														class="inline-flex rounded-full bg-rose-500/10 px-1.5 py-0.5 text-[9px] font-medium tracking-wide text-rose-700 dark:text-rose-300"
@@ -450,7 +471,7 @@
 													</span>
 												{/if}
 												<span class="text-muted-foreground text-[11px] whitespace-nowrap tabular-nums">
-													{range ?? (!cell.wfh && !cell.lop ? '—' : '')}
+													{range ?? (!cell.wfh && !cell.leave && !cell.lop ? '—' : '')}
 												</span>
 											</div>
 										</td>
