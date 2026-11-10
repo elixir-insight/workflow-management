@@ -12,6 +12,7 @@
 	import ChevronRight from '@lucide/svelte/icons/chevron-right';
 	import ClipboardCheck from '@lucide/svelte/icons/clipboard-check';
 	import House from '@lucide/svelte/icons/house';
+	import X from '@lucide/svelte/icons/x';
 	import { toast } from 'svelte-sonner';
 	import type { PageProps } from './$types';
 
@@ -19,6 +20,7 @@
 
 	let savingTimes = $state(false);
 	let deletingTimes = $state(false);
+	let deleteConfirmOpen = $state(false);
 
 	const hasSavedEntry = $derived(Boolean(data.selectedAttendance));
 
@@ -312,45 +314,93 @@
 		</form>
 
 		{#if hasSavedEntry}
-			<form
-				method="POST"
-				action="?/deleteTimes"
-				class="mt-1"
-				use:enhance={() => {
-					deletingTimes = true;
-					return async ({ result, update }) => {
-						try {
-							await update();
-							if (result.type === 'failure' && typeof result.data?.error === 'string') {
-								toast.error(result.data.error);
-							}
-						} finally {
-							deletingTimes = false;
-						}
-					};
-				}}
-				onsubmit={(event) => {
-					if (
-						!confirm(
-							`Delete the in/out times for ${formatDayHeading(workDate)}? This cannot be undone.`
-						)
-					) {
-						event.preventDefault();
-					}
-				}}
+			<Button
+				type="button"
+				variant="outline"
+				class="text-destructive hover:text-destructive mt-1 h-11 w-full rounded-xl sm:w-auto"
+				disabled={savingTimes || deletingTimes}
+				onclick={() => (deleteConfirmOpen = true)}
 			>
-				<input type="hidden" name="workDate" value={workDate} />
-				<Button
-					type="submit"
-					variant="outline"
-					class="text-destructive hover:text-destructive h-11 w-full rounded-xl sm:w-auto"
-					disabled={savingTimes || deletingTimes}
-				>
-					{deletingTimes ? 'Deleting…' : 'Delete entry'}
-				</Button>
-			</form>
+				Delete entry
+			</Button>
 		{/if}
 	</section>
+
+	{#if deleteConfirmOpen}
+		<div class="fixed inset-0 z-50 flex items-end justify-center p-4 sm:items-center">
+			<button
+				type="button"
+				class="absolute inset-0 bg-black/40"
+				aria-label="Close delete confirmation"
+				disabled={deletingTimes}
+				onclick={() => (deleteConfirmOpen = false)}
+			></button>
+
+			<div
+				role="dialog"
+				aria-modal="true"
+				aria-labelledby="delete-attendance-title"
+				aria-describedby="delete-attendance-description"
+				class="border-border bg-card relative z-10 flex w-full max-w-md flex-col overflow-hidden rounded-xl border shadow-lg"
+			>
+				<div class="flex items-start justify-between gap-3 border-b px-4 py-3">
+					<div class="min-w-0">
+						<h2 id="delete-attendance-title" class="text-foreground text-base font-medium">
+							Delete attendance entry?
+						</h2>
+						<p id="delete-attendance-description" class="text-muted-foreground mt-1 text-sm">
+							This removes the in/out times for {formatDayHeading(workDate)}. This cannot be undone.
+						</p>
+					</div>
+					<Button
+						type="button"
+						variant="outline"
+						size="icon"
+						aria-label="Close"
+						disabled={deletingTimes}
+						onclick={() => (deleteConfirmOpen = false)}
+					>
+						<X class="size-4" />
+					</Button>
+				</div>
+
+				<form
+					method="POST"
+					action="?/deleteTimes"
+					class="flex flex-wrap justify-end gap-2 px-4 py-3"
+					use:enhance={() => {
+						deletingTimes = true;
+						return async ({ result, update }) => {
+							try {
+								await update();
+								if (result.type === 'failure' && typeof result.data?.error === 'string') {
+									toast.error(result.data.error);
+									return;
+								}
+								deleteConfirmOpen = false;
+							} finally {
+								deletingTimes = false;
+							}
+						};
+					}}
+				>
+					<input type="hidden" name="workDate" value={workDate} />
+					<Button
+						type="button"
+						variant="outline"
+						class="h-10"
+						disabled={deletingTimes}
+						onclick={() => (deleteConfirmOpen = false)}
+					>
+						Cancel
+					</Button>
+					<Button type="submit" variant="destructive" class="h-10" disabled={deletingTimes}>
+						{deletingTimes ? 'Deleting…' : 'Confirm delete'}
+					</Button>
+				</form>
+			</div>
+		</div>
+	{/if}
 
 	<section class="flex flex-col gap-3">
 		<div class="flex items-baseline justify-between gap-3 px-0.5">
