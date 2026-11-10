@@ -10,7 +10,8 @@ export const auditActionLabels: Record<string, string> = {
 	'wfh.create': 'WFH requested',
 	'wfh.decide': 'WFH decided',
 	'attendance.create': 'Attendance logged',
-	'attendance.update': 'Attendance updated'
+	'attendance.update': 'Attendance updated',
+	'attendance.delete': 'Attendance deleted'
 };
 
 export const auditFieldLabels: Record<string, string> = {

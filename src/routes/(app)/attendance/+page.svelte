@@ -18,6 +18,9 @@
 	let { data, form }: PageProps = $props();
 
 	let savingTimes = $state(false);
+	let deletingTimes = $state(false);
+
+	const hasSavedEntry = $derived(Boolean(data.selectedAttendance));
 
 	const workDate = $derived(form?.workDate ?? data.selectedDate);
 	const inValue = $derived(data.selectedAttendance?.in_time?.slice(0, 5) ?? '');
@@ -297,10 +300,56 @@
 				<p role="alert" class="text-destructive text-sm">{form.error}</p>
 			{/if}
 
-			<Button type="submit" class="h-11 w-full rounded-xl sm:w-auto sm:min-w-40" disabled={savingTimes}>
-				{savingTimes ? 'Saving…' : 'Save times'}
-			</Button>
+			<div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+				<Button
+					type="submit"
+					class="h-11 w-full rounded-xl sm:w-auto sm:min-w-40"
+					disabled={savingTimes || deletingTimes}
+				>
+					{savingTimes ? 'Saving…' : 'Save times'}
+				</Button>
+			</div>
 		</form>
+
+		{#if hasSavedEntry}
+			<form
+				method="POST"
+				action="?/deleteTimes"
+				class="mt-1"
+				use:enhance={() => {
+					deletingTimes = true;
+					return async ({ result, update }) => {
+						try {
+							await update();
+							if (result.type === 'failure' && typeof result.data?.error === 'string') {
+								toast.error(result.data.error);
+							}
+						} finally {
+							deletingTimes = false;
+						}
+					};
+				}}
+				onsubmit={(event) => {
+					if (
+						!confirm(
+							`Delete the in/out times for ${formatDayHeading(workDate)}? This cannot be undone.`
+						)
+					) {
+						event.preventDefault();
+					}
+				}}
+			>
+				<input type="hidden" name="workDate" value={workDate} />
+				<Button
+					type="submit"
+					variant="outline"
+					class="text-destructive hover:text-destructive h-11 w-full rounded-xl sm:w-auto"
+					disabled={savingTimes || deletingTimes}
+				>
+					{deletingTimes ? 'Deleting…' : 'Delete entry'}
+				</Button>
+			</form>
+		{/if}
 	</section>
 
 	<section class="flex flex-col gap-3">

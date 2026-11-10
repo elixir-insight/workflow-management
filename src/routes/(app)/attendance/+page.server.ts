@@ -181,5 +181,45 @@ export const actions = {
 					: `Attendance times saved for ${workDate}.`
 		});
 		redirect(303, `/attendance?date=${workDate}`);
+	},
+
+	deleteTimes: async ({ request, cookies, locals }) => {
+		const formData = await request.formData();
+		const today = todayIso();
+		const workDate = String(formData.get('workDate') ?? '').trim() || today;
+		const values = { times: true as const, workDate };
+
+		if (!locals.claims || !locals.profile || locals.profile.status !== 'approved') {
+			return fail(401, { error: 'Sign in required.', ...values });
+		}
+
+		if (!isValidWorkDate(workDate, today)) {
+			return fail(400, {
+				error: 'Choose today or an earlier date.',
+				...values
+			});
+		}
+
+		const { error: deleteError } = await locals.supabase.rpc('delete_attendance_day', {
+			next_work_date: workDate
+		});
+
+		if (deleteError) {
+			return fail(400, {
+				error: deleteError.message?.includes('not found')
+					? 'No attendance entry to delete for this date.'
+					: 'Attendance entry could not be deleted.',
+				...values
+			});
+		}
+
+		setFlash(cookies, {
+			type: 'success',
+			message:
+				workDate === today
+					? 'Attendance entry deleted for today.'
+					: `Attendance entry deleted for ${workDate}.`
+		});
+		redirect(303, `/attendance?date=${workDate}`);
 	}
 } satisfies Actions;

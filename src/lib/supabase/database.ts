@@ -463,6 +463,12 @@ export type Database = {
 				};
 				Returns: undefined;
 			};
+			delete_attendance_day: {
+				Args: {
+					next_work_date: string;
+				};
+				Returns: undefined;
+			};
 			upsert_attendance_day: {
 				Args: {
 					next_in_time?: string | null;
