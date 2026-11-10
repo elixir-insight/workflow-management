@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
-	import { isPlatformAdminEmail } from '#lib/auth/platform-admin';
 	import { roleLabels } from '#lib/auth/roles';
 	import logo from '#lib/assets/elixirpay-logo.png';
 	import ThemeToggle from '#lib/components/theme-toggle.svelte';
@@ -77,22 +76,13 @@
 		}
 
 		if (role === 'admin' || role === 'payroll') {
-			items.push(
-				{
-					route: '/(app)/admin/users',
-					pathname: '/admin/users',
-					label: 'User management',
-					icon: Users,
-					exact: false
-				},
-				{
-					route: '/(app)/timesheet',
-					pathname: '/timesheet',
-					label: 'Timesheet',
-					icon: Table,
-					exact: false
-				}
-			);
+			items.push({
+				route: '/(app)/admin/users',
+				pathname: '/admin/users',
+				label: 'User management',
+				icon: Users,
+				exact: false
+			});
 		}
 
 		if (role === 'admin') {
@@ -105,15 +95,22 @@
 			});
 		}
 
-		if (!isPlatformAdminEmail(email)) {
-			items.push({
+		items.push(
+			{
+				route: '/(app)/timesheet',
+				pathname: '/timesheet',
+				label: 'Timesheet',
+				icon: Table,
+				exact: false
+			},
+			{
 				route: '/(app)/attendance',
 				pathname: '/attendance',
 				label: 'Attendance',
 				icon: CalendarDays,
 				exact: false
-			});
-		}
+			}
+		);
 
 		return items;
 	});

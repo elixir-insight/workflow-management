@@ -29,4 +29,4 @@
 	});
 </script>
 
-<Toaster position="top-center" richColors closeButton />
+<Toaster position="bottom-right" closeButton />

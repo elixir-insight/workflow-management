@@ -8,6 +8,6 @@ export const load: PageServerLoad = async ({ locals }) => {
 	}
 
 	return {
-		dashboard: await loadPersonalDashboard(locals.supabase, locals.claims.sub)
+		dashboard: await loadPersonalDashboard(locals.supabase, locals.claims.sub, locals.claims.email)
 	};
 };

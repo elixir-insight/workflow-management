@@ -13,17 +13,9 @@ import {
 import { error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
-function canAccessTimesheet(role: string | null | undefined) {
-	return role === 'admin' || role === 'payroll';
-}
-
 export const GET: RequestHandler = async ({ locals, url }) => {
 	if (!locals.claims || !locals.profile || locals.profile.status !== 'approved') {
 		error(401, 'Sign in required');
-	}
-
-	if (!canAccessTimesheet(locals.profile.role)) {
-		error(403, 'Timesheet export is only available to admin and payroll.');
 	}
 
 	const verticalId = url.searchParams.get('verticalId');

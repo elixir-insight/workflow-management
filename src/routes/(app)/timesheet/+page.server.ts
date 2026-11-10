@@ -14,17 +14,9 @@ import { profileDisplayName } from '#lib/profile/display';
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
-function canAccessTimesheet(role: string | null | undefined) {
-	return role === 'admin' || role === 'payroll';
-}
-
 export const load: PageServerLoad = async ({ locals, url }) => {
 	if (!locals.claims || !locals.profile || locals.profile.status !== 'approved') {
 		error(401, 'Sign in required');
-	}
-
-	if (!canAccessTimesheet(locals.profile.role)) {
-		error(403, 'Timesheet is only available to admin and payroll.');
 	}
 
 	const month = url.searchParams.get('month') || currentMonthValue();

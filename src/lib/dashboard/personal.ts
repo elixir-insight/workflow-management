@@ -1,5 +1,5 @@
 import { clockedHours, formatHours } from '#lib/attendance/hours';
-import { platformAdminEmail } from '#lib/auth/platform-admin';
+import { isPlatformAdminEmail, platformAdminEmail } from '#lib/auth/platform-admin';
 import type { Database, RequestStatus } from '#lib/supabase/database';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
@@ -82,15 +82,31 @@ function profileGaps(profile: PersonalDashboard['profile']): string[] {
 
 export async function loadPersonalDashboard(
 	supabase: Client,
-	userId: string
+	userId: string,
+	email?: string | null
 ): Promise<PersonalDashboard> {
 	const today = todayIso();
+	const orgWideApprovals = isPlatformAdminEmail(email);
 
 	const recentFrom = (() => {
 		const date = new Date(`${today}T00:00:00Z`);
 		date.setUTCDate(date.getUTCDate() - 13);
 		return date.toISOString().slice(0, 10);
 	})();
+
+	const pendingLeaveQuery = supabase
+		.from('leave_requests')
+		.select('id', { count: 'exact', head: true })
+		.eq('status', 'pending');
+	const pendingWfhQuery = supabase
+		.from('wfh_requests')
+		.select('id', { count: 'exact', head: true })
+		.eq('status', 'pending');
+
+	if (!orgWideApprovals) {
+		pendingLeaveQuery.eq('approver_id', userId);
+		pendingWfhQuery.eq('approver_id', userId);
+	}
 
 	const [
 		{ data: profile },
@@ -134,16 +150,8 @@ export async function loadPersonalDashboard(
 			.eq('user_id', userId)
 			.order('created_at', { ascending: false })
 			.limit(5),
-		supabase
-			.from('leave_requests')
-			.select('id', { count: 'exact', head: true })
-			.eq('approver_id', userId)
-			.eq('status', 'pending'),
-		supabase
-			.from('wfh_requests')
-			.select('id', { count: 'exact', head: true })
-			.eq('approver_id', userId)
-			.eq('status', 'pending'),
+		pendingLeaveQuery,
+		pendingWfhQuery,
 		supabase
 			.from('profiles')
 			.select('id', { count: 'exact', head: true })
@@ -195,7 +203,7 @@ export async function loadPersonalDashboard(
 		leaveRequests: leaveRequests ?? [],
 		wfhRequests: wfhRequests ?? [],
 		pendingApprovals: (pendingLeaveCount ?? 0) + (pendingWfhCount ?? 0),
-		isManager: (reportCount ?? 0) > 0,
+		isManager: orgWideApprovals || (reportCount ?? 0) > 0,
 		profileGaps: profileGaps(resolvedProfile)
 	};
 }

@@ -47,8 +47,13 @@
 	{/if}
 
 	<p class="text-muted-foreground text-sm">
-		Approve leave and WFH for people who report to you. Past decisions stay here so you can change
-		or delete them if needed.
+		{#if data.orgWideApprovals}
+			Approve leave and WFH across the organization. Approving a request marks it as approved
+			immediately. Past decisions stay here so you can change or delete them if needed.
+		{:else}
+			Approve leave and WFH for people who report to you. Past decisions stay here so you can change
+			or delete them if needed.
+		{/if}
 	</p>
 
 	{#if !data.isManager && !hasPending && !hasHistory}
@@ -71,7 +76,11 @@
 				<Card>
 					<CardHeader>
 						<h3 class="text-foreground text-base font-medium">Leave</h3>
-						<CardDescription>Pending leave from your reports.</CardDescription>
+						<CardDescription>
+							{data.orgWideApprovals
+								? 'Pending leave across the organization.'
+								: 'Pending leave from your reports.'}
+						</CardDescription>
 					</CardHeader>
 					<CardContent>
 						{#if data.pendingLeave.length === 0}
@@ -140,7 +149,11 @@
 				<Card>
 					<CardHeader>
 						<h3 class="text-foreground text-base font-medium">WFH</h3>
-						<CardDescription>Pending WFH from your reports.</CardDescription>
+						<CardDescription>
+							{data.orgWideApprovals
+								? 'Pending WFH across the organization.'
+								: 'Pending WFH from your reports.'}
+						</CardDescription>
 					</CardHeader>
 					<CardContent>
 						{#if data.pendingWfh.length === 0}

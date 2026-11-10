@@ -1,4 +1,5 @@
 import { clockedHours, formatHours } from '#lib/attendance/hours';
+import { isPlatformAdminEmail } from '#lib/auth/platform-admin';
 import { setFlash } from '#lib/server/flash';
 import { error, fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
@@ -25,6 +26,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	}
 
 	const userId = locals.claims.sub;
+	const orgWideApprovals = isPlatformAdminEmail(locals.claims.email);
 	const today = todayIso();
 	const requestedDate = url.searchParams.get('date')?.trim() || today;
 	const selectedDate = isValidWorkDate(requestedDate, today) ? requestedDate : today;
@@ -34,6 +36,20 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		date.setUTCDate(date.getUTCDate() - 29);
 		return date.toISOString().slice(0, 10);
 	})();
+
+	const pendingLeaveQuery = locals.supabase
+		.from('leave_requests')
+		.select('id', { count: 'exact', head: true })
+		.eq('status', 'pending');
+	const pendingWfhQuery = locals.supabase
+		.from('wfh_requests')
+		.select('id', { count: 'exact', head: true })
+		.eq('status', 'pending');
+
+	if (!orgWideApprovals) {
+		pendingLeaveQuery.eq('approver_id', userId);
+		pendingWfhQuery.eq('approver_id', userId);
+	}
 
 	const [
 		{ data: profile },
@@ -75,16 +91,8 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 			.eq('user_id', userId)
 			.order('created_at', { ascending: false })
 			.limit(5),
-		locals.supabase
-			.from('leave_requests')
-			.select('id', { count: 'exact', head: true })
-			.eq('approver_id', userId)
-			.eq('status', 'pending'),
-		locals.supabase
-			.from('wfh_requests')
-			.select('id', { count: 'exact', head: true })
-			.eq('approver_id', userId)
-			.eq('status', 'pending'),
+		pendingLeaveQuery,
+		pendingWfhQuery,
 		locals.supabase
 			.from('profiles')
 			.select('id', { count: 'exact', head: true })
@@ -118,7 +126,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		leaveRequests: leaveRequests ?? [],
 		wfhRequests: wfhRequests ?? [],
 		pendingApprovals: (pendingLeaveCount ?? 0) + (pendingWfhCount ?? 0),
-		isManager: (reportCount ?? 0) > 0
+		isManager: orgWideApprovals || (reportCount ?? 0) > 0
 	};
 };
 

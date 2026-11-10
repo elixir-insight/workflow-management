@@ -1,3 +1,4 @@
+import { isPlatformAdminEmail } from '#lib/auth/platform-admin';
 import { profileDisplayName } from '#lib/profile/display';
 import { setFlash } from '#lib/server/flash';
 import { error, fail, redirect } from '@sveltejs/kit';
@@ -38,22 +39,29 @@ export const load: PageServerLoad = async ({ locals }) => {
 	}
 
 	const userId = locals.claims.sub;
+	const orgWideApprovals = isPlatformAdminEmail(locals.claims.email);
+
+	const leaveQuery = locals.supabase
+		.from('leave_requests')
+		.select(
+			'id, leave_kind, start_date, end_date, day_count, reason, status, created_at, decided_at, user_id, applicant:profiles!leave_requests_user_id_fkey(id, email, first_name, last_name, employee_id)'
+		)
+		.order('created_at', { ascending: false });
+	const wfhQuery = locals.supabase
+		.from('wfh_requests')
+		.select(
+			'id, work_date, reason, status, created_at, decided_at, user_id, applicant:profiles!wfh_requests_user_id_fkey(id, email, first_name, last_name, employee_id)'
+		)
+		.order('created_at', { ascending: false });
+
+	if (!orgWideApprovals) {
+		leaveQuery.eq('approver_id', userId);
+		wfhQuery.eq('approver_id', userId);
+	}
 
 	const [{ data: leaveRows }, { data: wfhRows }, { count: reportCount }] = await Promise.all([
-		locals.supabase
-			.from('leave_requests')
-			.select(
-				'id, leave_kind, start_date, end_date, day_count, reason, status, created_at, decided_at, user_id, applicant:profiles!leave_requests_user_id_fkey(id, email, first_name, last_name, employee_id)'
-			)
-			.eq('approver_id', userId)
-			.order('created_at', { ascending: false }),
-		locals.supabase
-			.from('wfh_requests')
-			.select(
-				'id, work_date, reason, status, created_at, decided_at, user_id, applicant:profiles!wfh_requests_user_id_fkey(id, email, first_name, last_name, employee_id)'
-			)
-			.eq('approver_id', userId)
-			.order('created_at', { ascending: false }),
+		leaveQuery,
+		wfhQuery,
 		locals.supabase
 			.from('profiles')
 			.select('id', { count: 'exact', head: true })
@@ -95,7 +103,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 		pendingWfh: wfhMapped.filter((row) => row.status === 'pending'),
 		decidedLeave: leaveMapped.filter((row) => row.status !== 'pending'),
 		decidedWfh: wfhMapped.filter((row) => row.status !== 'pending'),
-		isManager: (reportCount ?? 0) > 0
+		isManager: orgWideApprovals || (reportCount ?? 0) > 0,
+		orgWideApprovals
 	};
 };
 

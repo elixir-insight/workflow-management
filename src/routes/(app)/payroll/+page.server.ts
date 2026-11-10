@@ -1,4 +1,3 @@
-import { isPlatformAdminEmail } from '#lib/auth/platform-admin';
 import { loadPayrollDashboard } from '#lib/dashboard/payroll';
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
@@ -10,6 +9,6 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 	return {
 		dashboard: await loadPayrollDashboard(locals.supabase),
-		showAttendance: !isPlatformAdminEmail(locals.claims.email)
+		showAttendance: true
 	};
 };

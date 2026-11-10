@@ -1,5 +1,4 @@
 import { SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from '$app/env/private';
-import { isPlatformAdminEmail } from '#lib/auth/platform-admin';
 import { roleHomes } from '#lib/auth/roles';
 import type { AppRole, Database } from '#lib/supabase/database';
 import { createServerClient } from '@supabase/ssr';
@@ -35,19 +34,19 @@ function isPageRequest(pathname: string) {
 	);
 }
 
-function isAllowedPath(role: AppRole | null, pathname: string, email?: string) {
+function isAllowedPath(role: AppRole | null, pathname: string) {
 	if (pathname === '/logout' || pathname === '/profile' || pathname.startsWith('/profile/')) {
 		return true;
 	}
 
 	const onAttendance = pathname === '/attendance' || pathname.startsWith('/attendance/');
 	if (onAttendance) {
-		return Boolean(role) && !isPlatformAdminEmail(email);
+		return Boolean(role);
 	}
 
 	const onTimesheet = pathname === '/timesheet' || pathname.startsWith('/timesheet/');
 	if (onTimesheet) {
-		return role === 'admin' || role === 'payroll';
+		return Boolean(role);
 	}
 
 	if (role === 'admin') {
@@ -141,7 +140,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 			}
 		} else if (profile.role && pathname !== '/logout') {
 			const home = roleHomes[profile.role];
-			const allowed = isAllowedPath(profile.role, pathname, event.locals.claims?.email);
+			const allowed = isAllowedPath(profile.role, pathname);
 
 			if (
 				pathname === '/' ||
