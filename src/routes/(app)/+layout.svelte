@@ -42,7 +42,7 @@
 
 	<div class="flex w-full max-w-full min-w-0 flex-1 flex-col overflow-x-clip">
 		<header
-			class="border-border/80 bg-background/80 sticky top-0 z-20 flex min-h-14 w-full max-w-full min-w-0 items-center gap-2 overflow-x-clip border-b px-3 pt-[env(safe-area-inset-top)] backdrop-blur-md sm:gap-3 sm:px-4 md:min-h-16 md:px-6 lg:px-8"
+			class="border-border/80 bg-background/80 sticky top-0 z-90 flex min-h-14 w-full max-w-full min-w-0 items-center gap-2 overflow-x-clip border-b px-3 pt-[env(safe-area-inset-top)] backdrop-blur-md sm:gap-3 sm:px-4 md:min-h-16 md:px-6 lg:px-8"
 		>
 			<Button
 				variant="outline"
