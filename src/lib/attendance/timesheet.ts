@@ -19,6 +19,12 @@ export type TimesheetWfhEntry = {
 	work_date: string;
 };
 
+export type TimesheetEmEntry = {
+	user_id: string;
+	start_date: string;
+	end_date: string;
+};
+
 export type TimesheetLeaveKind = 'leave' | 'lop';
 
 export type TimesheetLeaveEntry = {
@@ -33,6 +39,7 @@ export type TimesheetCell = {
 	outTime: string | null;
 	label: string;
 	wfh: boolean;
+	em: boolean;
 	/** Paid casual/earned leave for the day */
 	leave: boolean;
 	lop: boolean;
@@ -122,6 +129,7 @@ export function cellLabel(
 	inTime: string | null,
 	outTime: string | null,
 	wfh = false,
+	em = false,
 	leave = false,
 	lop = false,
 	weekend = false,
@@ -133,12 +141,42 @@ export function cellLabel(
 		weekend ? 'Weekend' : null,
 		holiday ? 'Holiday' : null,
 		wfh ? 'WFH' : null,
+		em ? 'EM' : null,
 		leave ? 'Leave' : null,
 		lop ? 'LOP' : null
 	].filter(Boolean);
 	if (tags.length && times) return `${times} · ${tags.join(' · ')}`;
 	if (tags.length) return tags.join(' · ');
 	return times;
+}
+
+function expandDateRange(
+	userId: string,
+	startDate: string,
+	endDate: string,
+	days: string[],
+	into: Set<string>
+) {
+	const daySet = new Set(days);
+	const start = new Date(`${startDate}T00:00:00Z`);
+	const end = new Date(`${endDate}T00:00:00Z`);
+	if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end < start) {
+		return;
+	}
+
+	for (let cursor = new Date(start); cursor <= end; cursor.setUTCDate(cursor.getUTCDate() + 1)) {
+		const iso = cursor.toISOString().slice(0, 10);
+		if (!daySet.has(iso)) continue;
+		into.add(`${userId}:${iso}`);
+	}
+}
+
+function expandEmDates(entries: TimesheetEmEntry[], days: string[]) {
+	const byKey = new Set<string>();
+	for (const entry of entries) {
+		expandDateRange(entry.user_id, entry.start_date, entry.end_date, days, byKey);
+	}
+	return byKey;
 }
 
 function expandLeaveDates(entries: TimesheetLeaveEntry[], days: string[]) {
@@ -176,12 +214,14 @@ export function buildTimesheetMatrix(
 	entries: TimesheetDayEntry[],
 	wfhEntries: TimesheetWfhEntry[] = [],
 	leaveEntries: TimesheetLeaveEntry[] = [],
-	dayMeta: TimesheetDayMeta[] = buildDayMeta(days)
+	dayMeta: TimesheetDayMeta[] = buildDayMeta(days),
+	emEntries: TimesheetEmEntry[] = []
 ) {
 	const byUserDate = new Map<string, { inTime: string | null; outTime: string | null }>();
 	const wfhByUserDate = new Set(
 		wfhEntries.map((entry) => `${entry.user_id}:${entry.work_date}`)
 	);
+	const emByUserDate = expandEmDates(emEntries, days);
 	const leaveByUserDate = expandLeaveDates(leaveEntries, days);
 	const metaByDate = new Map(dayMeta.map((meta) => [meta.date, meta]));
 
@@ -199,6 +239,7 @@ export function buildTimesheetMatrix(
 			const times = byUserDate.get(key);
 			const meta = metaByDate.get(day);
 			const wfh = wfhByUserDate.has(key);
+			const em = emByUserDate.has(key);
 			const leaveTag = leaveByUserDate.get(key) ?? null;
 			const leave = leaveTag === 'leave';
 			const lop = leaveTag === 'lop';
@@ -211,9 +252,10 @@ export function buildTimesheetMatrix(
 				inTime,
 				outTime,
 				wfh,
+				em,
 				leave,
 				lop,
-				label: cellLabel(inTime, outTime, wfh, leave, lop, weekend, holiday)
+				label: cellLabel(inTime, outTime, wfh, em, leave, lop, weekend, holiday)
 			} satisfies TimesheetCell;
 		})
 	}));

@@ -24,6 +24,7 @@
 		{ id: 'profile', label: 'People' },
 		{ id: 'leave', label: 'Leave' },
 		{ id: 'wfh', label: 'WFH' },
+		{ id: 'em', label: 'EM' },
 		{ id: 'attendance', label: 'Attendance' },
 		{ id: 'vertical', label: 'Verticals' }
 	] as const satisfies ReadonlyArray<{ id: LogCategory; label: string }>;

@@ -291,6 +291,69 @@ export type Database = {
 				};
 				Relationships: [];
 			};
+			em_requests: {
+				Row: {
+					approver_id: string | null;
+					created_at: string;
+					day_count: number;
+					decided_at: string | null;
+					decided_by: string | null;
+					email_body: string;
+					end_date: string;
+					id: string;
+					reason: string;
+					start_date: string;
+					status: Database['public']['Enums']['request_status'];
+					updated_at: string;
+					user_id: string;
+				};
+				Insert: {
+					approver_id?: string | null;
+					created_at?: string;
+					day_count?: number;
+					decided_at?: string | null;
+					decided_by?: string | null;
+					email_body?: string;
+					end_date: string;
+					id?: string;
+					reason?: string;
+					start_date: string;
+					status?: Database['public']['Enums']['request_status'];
+					updated_at?: string;
+					user_id: string;
+				};
+				Update: {
+					approver_id?: string | null;
+					created_at?: string;
+					day_count?: number;
+					decided_at?: string | null;
+					decided_by?: string | null;
+					email_body?: string;
+					end_date?: string;
+					id?: string;
+					reason?: string;
+					start_date?: string;
+					status?: Database['public']['Enums']['request_status'];
+					updated_at?: string;
+					user_id?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: 'em_requests_approver_id_fkey';
+						columns: ['approver_id'];
+						isOneToOne: false;
+						referencedRelation: 'profiles';
+						referencedColumns: ['id'];
+					},
+					{
+						foreignKeyName: 'em_requests_user_id_fkey';
+						columns: ['user_id'];
+						isOneToOne: false;
+						referencedRelation: 'profiles';
+						referencedColumns: ['id'];
+					}
+				];
+			};
 			wfh_requests: {
 				Row: {
 					approver_id: string | null;
@@ -370,6 +433,16 @@ export type Database = {
 				};
 				Returns: undefined;
 			};
+			apply_em_request: {
+				Args: {
+					next_day_count: number;
+					next_email_body?: string;
+					next_end_date: string;
+					next_reason: string;
+					next_start_date: string;
+				};
+				Returns: string;
+			};
 			apply_wfh_request: {
 				Args: {
 					next_email_body?: string;
@@ -377,6 +450,13 @@ export type Database = {
 					next_work_date: string;
 				};
 				Returns: string;
+			};
+			decide_em_request: {
+				Args: {
+					next_status: string;
+					target: string;
+				};
+				Returns: undefined;
 			};
 			decide_leave_request: {
 				Args: {
@@ -388,6 +468,12 @@ export type Database = {
 			decide_wfh_request: {
 				Args: {
 					next_status: string;
+					target: string;
+				};
+				Returns: undefined;
+			};
+			delete_em_request_as_approver: {
+				Args: {
 					target: string;
 				};
 				Returns: undefined;
@@ -406,6 +492,13 @@ export type Database = {
 			};
 			delete_user: {
 				Args: {
+					target: string;
+				};
+				Returns: undefined;
+			};
+			revise_em_request: {
+				Args: {
+					next_status: string;
 					target: string;
 				};
 				Returns: undefined;

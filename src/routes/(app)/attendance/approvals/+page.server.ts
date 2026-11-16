@@ -33,6 +33,14 @@ function wfhErrorMessage(raw: string | undefined) {
 	return 'WFH decision could not be saved.';
 }
 
+function emErrorMessage(raw: string | undefined) {
+	if (!raw) return 'External meeting decision could not be saved.';
+	if (raw.includes('overlapping em') || raw.includes('em already exists')) {
+		return 'That person already has an external meeting covering these dates.';
+	}
+	return 'External meeting decision could not be saved.';
+}
+
 export const load: PageServerLoad = async ({ locals }) => {
 	if (!locals.claims || !locals.profile || locals.profile.status !== 'approved') {
 		error(401, 'Sign in required');
@@ -53,21 +61,30 @@ export const load: PageServerLoad = async ({ locals }) => {
 			'id, work_date, reason, status, created_at, decided_at, user_id, applicant:profiles!wfh_requests_user_id_fkey(id, email, first_name, last_name, employee_id)'
 		)
 		.order('created_at', { ascending: false });
+	const emQuery = locals.supabase
+		.from('em_requests')
+		.select(
+			'id, start_date, end_date, day_count, reason, status, created_at, decided_at, user_id, applicant:profiles!em_requests_user_id_fkey(id, email, first_name, last_name, employee_id)'
+		)
+		.order('created_at', { ascending: false });
 
 	if (!orgWideApprovals) {
 		leaveQuery.eq('approver_id', userId);
 		wfhQuery.eq('approver_id', userId);
+		emQuery.eq('approver_id', userId);
 	}
 
-	const [{ data: leaveRows }, { data: wfhRows }, { count: reportCount }] = await Promise.all([
-		leaveQuery,
-		wfhQuery,
-		locals.supabase
-			.from('profiles')
-			.select('id', { count: 'exact', head: true })
-			.eq('reports_to', userId)
-			.eq('status', 'approved')
-	]);
+	const [{ data: leaveRows }, { data: wfhRows }, { data: emRows }, { count: reportCount }] =
+		await Promise.all([
+			leaveQuery,
+			wfhQuery,
+			emQuery,
+			locals.supabase
+				.from('profiles')
+				.select('id', { count: 'exact', head: true })
+				.eq('reports_to', userId)
+				.eq('status', 'approved')
+		]);
 
 	const leaveMapped = (leaveRows ?? []).map((row) => {
 		const person = (row.applicant as Applicant | null) ?? null;
@@ -98,11 +115,28 @@ export const load: PageServerLoad = async ({ locals }) => {
 		};
 	});
 
+	const emMapped = (emRows ?? []).map((row) => {
+		const person = (row.applicant as Applicant | null) ?? null;
+		return {
+			id: row.id,
+			start_date: row.start_date,
+			end_date: row.end_date,
+			day_count: row.day_count,
+			reason: row.reason,
+			status: row.status,
+			created_at: row.created_at,
+			decided_at: row.decided_at,
+			...mapApplicant(person)
+		};
+	});
+
 	return {
 		pendingLeave: leaveMapped.filter((row) => row.status === 'pending'),
 		pendingWfh: wfhMapped.filter((row) => row.status === 'pending'),
+		pendingEm: emMapped.filter((row) => row.status === 'pending'),
 		decidedLeave: leaveMapped.filter((row) => row.status !== 'pending'),
 		decidedWfh: wfhMapped.filter((row) => row.status !== 'pending'),
+		decidedEm: emMapped.filter((row) => row.status !== 'pending'),
 		isManager: orgWideApprovals || (reportCount ?? 0) > 0,
 		orgWideApprovals
 	};
@@ -270,6 +304,91 @@ export const actions = {
 		}
 
 		setFlash(cookies, { type: 'success', message: 'WFH request deleted.' });
+		redirect(303, '/attendance/approvals');
+	},
+
+	decideEm: async ({ request, cookies, locals }) => {
+		if (!locals.claims || !locals.profile || locals.profile.status !== 'approved') {
+			return fail(401, { error: 'Sign in required.' });
+		}
+
+		const formData = await request.formData();
+		const id = String(formData.get('id') ?? '');
+		const decision = String(formData.get('decision') ?? '');
+
+		if (!id || (decision !== 'approved' && decision !== 'rejected')) {
+			return fail(400, { error: 'Invalid external meeting decision.' });
+		}
+
+		const { error: decideError } = await locals.supabase.rpc('decide_em_request', {
+			target: id,
+			next_status: decision
+		});
+
+		if (decideError) {
+			return fail(400, { error: emErrorMessage(decideError.message) });
+		}
+
+		setFlash(cookies, {
+			type: 'success',
+			message: decision === 'approved' ? 'External meeting approved.' : 'External meeting rejected.'
+		});
+		redirect(303, '/attendance/approvals');
+	},
+
+	reviseEm: async ({ request, cookies, locals }) => {
+		if (!locals.claims || !locals.profile || locals.profile.status !== 'approved') {
+			return fail(401, { error: 'Sign in required.' });
+		}
+
+		const formData = await request.formData();
+		const id = String(formData.get('id') ?? '');
+		const decision = String(formData.get('decision') ?? '');
+
+		if (!id || (decision !== 'approved' && decision !== 'rejected')) {
+			return fail(400, { error: 'Invalid external meeting revision.' });
+		}
+
+		const { error: reviseError } = await locals.supabase.rpc('revise_em_request', {
+			target: id,
+			next_status: decision
+		});
+
+		if (reviseError) {
+			return fail(400, { error: emErrorMessage(reviseError.message) });
+		}
+
+		setFlash(cookies, {
+			type: 'success',
+			message:
+				decision === 'approved'
+					? 'External meeting changed to approved.'
+					: 'External meeting changed to rejected.'
+		});
+		redirect(303, '/attendance/approvals');
+	},
+
+	deleteEm: async ({ request, cookies, locals }) => {
+		if (!locals.claims || !locals.profile || locals.profile.status !== 'approved') {
+			return fail(401, { error: 'Sign in required.' });
+		}
+
+		const formData = await request.formData();
+		const id = String(formData.get('id') ?? '');
+
+		if (!id) {
+			return fail(400, { error: 'Choose an external meeting request to delete.' });
+		}
+
+		const { error: deleteError } = await locals.supabase.rpc('delete_em_request_as_approver', {
+			target: id
+		});
+
+		if (deleteError) {
+			return fail(400, { error: 'The external meeting request could not be deleted.' });
+		}
+
+		setFlash(cookies, { type: 'success', message: 'External meeting request deleted.' });
 		redirect(303, '/attendance/approvals');
 	}
 } satisfies Actions;

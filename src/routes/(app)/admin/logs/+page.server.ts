@@ -3,7 +3,7 @@ import type { PageServerLoad } from './$types';
 
 const pageSize = 50;
 
-const categories = ['all', 'profile', 'leave', 'wfh', 'attendance', 'vertical'] as const;
+const categories = ['all', 'profile', 'leave', 'wfh', 'em', 'attendance', 'vertical'] as const;
 
 export type LogCategory = (typeof categories)[number];
 

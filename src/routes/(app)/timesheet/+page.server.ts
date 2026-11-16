@@ -7,6 +7,7 @@ import {
 	type OfficeHoliday,
 	type TimesheetDayEntry,
 	type TimesheetEmployee,
+	type TimesheetEmEntry,
 	type TimesheetLeaveEntry,
 	type TimesheetWfhEntry
 } from '#lib/attendance/timesheet';
@@ -86,12 +87,14 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 
 	let entries: TimesheetDayEntry[] = [];
 	let wfhEntries: TimesheetWfhEntry[] = [];
+	let emEntries: TimesheetEmEntry[] = [];
 	let leaveEntries: TimesheetLeaveEntry[] = [];
 
 	if (employeeIds.length > 0) {
 		const [
 			{ data: attendance, error: attendanceError },
 			{ data: wfhRows, error: wfhError },
+			{ data: emRows, error: emError },
 			{ data: leaveRows, error: leaveError }
 		] = await Promise.all([
 			locals.supabase
@@ -107,6 +110,13 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 				.eq('status', 'approved')
 				.gte('work_date', bounds.startDate)
 				.lte('work_date', bounds.endDate),
+			locals.supabase
+				.from('em_requests')
+				.select('user_id, start_date, end_date')
+				.in('user_id', employeeIds)
+				.eq('status', 'approved')
+				.lte('start_date', bounds.endDate)
+				.gte('end_date', bounds.startDate),
 			locals.supabase
 				.from('leave_requests')
 				.select('user_id, start_date, end_date, leave_kind')
@@ -125,12 +135,17 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 			error(500, 'WFH data could not be loaded.');
 		}
 
+		if (emError) {
+			error(500, 'External meeting data could not be loaded.');
+		}
+
 		if (leaveError) {
 			error(500, 'Leave data could not be loaded.');
 		}
 
 		entries = (attendance ?? []) as TimesheetDayEntry[];
 		wfhEntries = (wfhRows ?? []) as TimesheetWfhEntry[];
+		emEntries = (emRows ?? []) as TimesheetEmEntry[];
 		leaveEntries = (leaveRows ?? []) as TimesheetLeaveEntry[];
 	}
 
@@ -140,7 +155,8 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		entries,
 		wfhEntries,
 		leaveEntries,
-		dayMeta
+		dayMeta,
+		emEntries
 	).map((row) => ({
 		...row,
 		displayName: profileDisplayName(row.employee)

@@ -9,6 +9,8 @@ export const auditActionLabels: Record<string, string> = {
 	'leave.decide': 'Leave decided',
 	'wfh.create': 'WFH requested',
 	'wfh.decide': 'WFH decided',
+	'em.create': 'External meeting requested',
+	'em.decide': 'External meeting decided',
 	'attendance.create': 'Attendance logged',
 	'attendance.update': 'Attendance updated',
 	'attendance.delete': 'Attendance deleted'

@@ -141,6 +141,48 @@ export function buildWfhEmail(input: WfhEmailInput) {
 	return { subject, body, managerEmail };
 }
 
+export type EmEmailInput = {
+	applicant: WfhEmailInput['applicant'];
+	manager: WfhEmailInput['manager'];
+	startDate: string;
+	endDate: string;
+	dayCount: number;
+	reason: string;
+};
+
+export function buildEmEmail(input: EmEmailInput) {
+	const applicantName = profileDisplayName(input.applicant);
+	const { managerName, managerEmail } = managerFields(input.manager);
+	const dateLine =
+		input.startDate === input.endDate
+			? formatDate(input.startDate)
+			: `${formatDate(input.startDate)} to ${formatDate(input.endDate)}`;
+	const subject = `External Meeting · ${applicantName} · ${dateLine}`;
+
+	const body = [
+		`To: ${managerEmail}`,
+		`Subject: ${subject}`,
+		'',
+		`Hi ${managerName},`,
+		'',
+		`I would like to mark an external meeting (EM) for ${dateLine} (${input.dayCount} day${input.dayCount === 1 ? '' : 's'}).`,
+		'',
+		`Reason: ${input.reason.trim() || '—'}`,
+		'',
+		'Please approve this external meeting request.',
+		'',
+		'Regards,',
+		applicantName,
+		input.applicant.designation?.trim() || null,
+		input.applicant.employee_id ? `Employee ID: ${input.applicant.employee_id}` : null,
+		input.applicant.email
+	]
+		.filter((line) => line !== null)
+		.join('\n');
+
+	return { subject, body, managerEmail };
+}
+
 export function inclusiveDayCount(startDate: string, endDate: string) {
 	const start = new Date(`${startDate}T00:00:00Z`);
 	const end = new Date(`${endDate}T00:00:00Z`);

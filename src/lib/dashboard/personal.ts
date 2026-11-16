@@ -102,10 +102,15 @@ export async function loadPersonalDashboard(
 		.from('wfh_requests')
 		.select('id', { count: 'exact', head: true })
 		.eq('status', 'pending');
+	const pendingEmQuery = supabase
+		.from('em_requests')
+		.select('id', { count: 'exact', head: true })
+		.eq('status', 'pending');
 
 	if (!orgWideApprovals) {
 		pendingLeaveQuery.eq('approver_id', userId);
 		pendingWfhQuery.eq('approver_id', userId);
+		pendingEmQuery.eq('approver_id', userId);
 	}
 
 	const [
@@ -116,6 +121,7 @@ export async function loadPersonalDashboard(
 		{ data: wfhRequests },
 		{ count: pendingLeaveCount },
 		{ count: pendingWfhCount },
+		{ count: pendingEmCount },
 		{ count: reportCount }
 	] = await Promise.all([
 		supabase
@@ -152,6 +158,7 @@ export async function loadPersonalDashboard(
 			.limit(5),
 		pendingLeaveQuery,
 		pendingWfhQuery,
+		pendingEmQuery,
 		supabase
 			.from('profiles')
 			.select('id', { count: 'exact', head: true })
@@ -202,7 +209,8 @@ export async function loadPersonalDashboard(
 		recentDays,
 		leaveRequests: leaveRequests ?? [],
 		wfhRequests: wfhRequests ?? [],
-		pendingApprovals: (pendingLeaveCount ?? 0) + (pendingWfhCount ?? 0),
+		pendingApprovals:
+			(pendingLeaveCount ?? 0) + (pendingWfhCount ?? 0) + (pendingEmCount ?? 0),
 		isManager: orgWideApprovals || (reportCount ?? 0) > 0,
 		profileGaps: profileGaps(resolvedProfile)
 	};

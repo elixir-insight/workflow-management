@@ -45,10 +45,15 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		.from('wfh_requests')
 		.select('id', { count: 'exact', head: true })
 		.eq('status', 'pending');
+	const pendingEmQuery = locals.supabase
+		.from('em_requests')
+		.select('id', { count: 'exact', head: true })
+		.eq('status', 'pending');
 
 	if (!orgWideApprovals) {
 		pendingLeaveQuery.eq('approver_id', userId);
 		pendingWfhQuery.eq('approver_id', userId);
+		pendingEmQuery.eq('approver_id', userId);
 	}
 
 	const [
@@ -57,8 +62,10 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		{ data: recentAttendance },
 		{ data: leaveRequests },
 		{ data: wfhRequests },
+		{ data: emRequests },
 		{ count: pendingLeaveCount },
 		{ count: pendingWfhCount },
+		{ count: pendingEmCount },
 		{ count: reportCount }
 	] = await Promise.all([
 		locals.supabase
@@ -91,8 +98,15 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 			.eq('user_id', userId)
 			.order('created_at', { ascending: false })
 			.limit(5),
+		locals.supabase
+			.from('em_requests')
+			.select('id, start_date, end_date, day_count, status, created_at, reason')
+			.eq('user_id', userId)
+			.order('created_at', { ascending: false })
+			.limit(5),
 		pendingLeaveQuery,
 		pendingWfhQuery,
+		pendingEmQuery,
 		locals.supabase
 			.from('profiles')
 			.select('id', { count: 'exact', head: true })
@@ -125,7 +139,9 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		recentDays,
 		leaveRequests: leaveRequests ?? [],
 		wfhRequests: wfhRequests ?? [],
-		pendingApprovals: (pendingLeaveCount ?? 0) + (pendingWfhCount ?? 0),
+		emRequests: emRequests ?? [],
+		pendingApprovals:
+			(pendingLeaveCount ?? 0) + (pendingWfhCount ?? 0) + (pendingEmCount ?? 0),
 		isManager: orgWideApprovals || (reportCount ?? 0) > 0
 	};
 };

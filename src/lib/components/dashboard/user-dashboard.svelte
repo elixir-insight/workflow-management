@@ -4,6 +4,7 @@
 	import { Button } from '#lib/components/ui/button';
 	import type { PersonalDashboard } from '#lib/dashboard/personal';
 	import { profileDisplayName } from '#lib/profile/display';
+	import BriefcaseBusiness from '@lucide/svelte/icons/briefcase-business';
 	import CalendarDays from '@lucide/svelte/icons/calendar-days';
 	import ClipboardCheck from '@lucide/svelte/icons/clipboard-check';
 	import Clock3 from '@lucide/svelte/icons/clock-3';
@@ -100,6 +101,14 @@
 			>
 				<House class="size-4" />
 				WFH
+			</Button>
+			<Button
+				href={resolve('/(app)/attendance/em')}
+				variant="outline"
+				class="h-11 w-full rounded-xl sm:h-10 sm:w-auto"
+			>
+				<BriefcaseBusiness class="size-4" />
+				EM
 			</Button>
 			{#if data.isManager || data.pendingApprovals > 0}
 				<Button

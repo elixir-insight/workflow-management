@@ -7,6 +7,7 @@ import {
 	type OfficeHoliday,
 	type TimesheetDayEntry,
 	type TimesheetEmployee,
+	type TimesheetEmEntry,
 	type TimesheetLeaveEntry,
 	type TimesheetWfhEntry
 } from '#lib/attendance/timesheet';
@@ -58,12 +59,14 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 
 	let entries: TimesheetDayEntry[] = [];
 	let wfhEntries: TimesheetWfhEntry[] = [];
+	let emEntries: TimesheetEmEntry[] = [];
 	let leaveEntries: TimesheetLeaveEntry[] = [];
 
 	if (employeeIds.length > 0) {
 		const [
 			{ data: attendance, error: attendanceError },
 			{ data: wfhRows, error: wfhError },
+			{ data: emRows, error: emError },
 			{ data: leaveRows, error: leaveError }
 		] = await Promise.all([
 			locals.supabase
@@ -80,6 +83,13 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 				.gte('work_date', bounds.startDate)
 				.lte('work_date', bounds.endDate),
 			locals.supabase
+				.from('em_requests')
+				.select('user_id, start_date, end_date')
+				.in('user_id', employeeIds)
+				.eq('status', 'approved')
+				.lte('start_date', bounds.endDate)
+				.gte('end_date', bounds.startDate),
+			locals.supabase
 				.from('leave_requests')
 				.select('user_id, start_date, end_date, leave_kind')
 				.in('user_id', employeeIds)
@@ -89,12 +99,13 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 				.gte('end_date', bounds.startDate)
 		]);
 
-		if (attendanceError || wfhError || leaveError) {
+		if (attendanceError || wfhError || emError || leaveError) {
 			error(500, 'Timesheet data could not be loaded.');
 		}
 
 		entries = (attendance ?? []) as TimesheetDayEntry[];
 		wfhEntries = (wfhRows ?? []) as TimesheetWfhEntry[];
+		emEntries = (emRows ?? []) as TimesheetEmEntry[];
 		leaveEntries = (leaveRows ?? []) as TimesheetLeaveEntry[];
 	}
 
@@ -104,7 +115,8 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 		entries,
 		wfhEntries,
 		leaveEntries,
-		dayMeta
+		dayMeta,
+		emEntries
 	);
 	const safeName = vertical.name.replace(/[^\w.-]+/g, '_');
 	const filename = `timesheet_${safeName}_${month}`;

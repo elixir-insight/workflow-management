@@ -2,6 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
+	import type { ResolvedPathname } from '$app/types';
 	import { Button } from '#lib/components/ui/button';
 	import { Input } from '#lib/components/ui/input';
 	import UserAvatar from '#lib/components/user-avatar.svelte';
@@ -9,6 +10,7 @@
 	import ChevronRight from '@lucide/svelte/icons/chevron-right';
 	import Download from '@lucide/svelte/icons/download';
 	import Search from '@lucide/svelte/icons/search';
+	import { SvelteURLSearchParams } from 'svelte/reactivity';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
@@ -47,10 +49,12 @@
 	});
 
 	function updateFilters(next: { verticalId?: string; month?: string }) {
-		const params = new URLSearchParams(page.url.searchParams.toString());
+		const params = new SvelteURLSearchParams(page.url.searchParams.toString());
 		if (next.verticalId) params.set('verticalId', next.verticalId);
 		if (next.month) params.set('month', next.month);
-		goto(`?${params.toString()}`, { replace: true, reset: false });
+		const href =
+			`${resolve('/(app)/timesheet')}?${params.toString()}` as ResolvedPathname;
+		goto(href, { replace: true, reset: false });
 	}
 
 	function shiftMonth(delta: number) {
@@ -60,13 +64,13 @@
 		updateFilters({ month: next });
 	}
 
-	function exportHref() {
-		if (!data.selectedVertical) return '#';
+	function exportHref(): ResolvedPathname {
+		if (!data.selectedVertical) return '#' as ResolvedPathname;
 		const params = new URLSearchParams({
 			verticalId: data.selectedVertical.id,
 			month: data.month
 		});
-		return `${resolve('/(app)/timesheet/export')}?${params.toString()}`;
+		return `${resolve('/(app)/timesheet/export')}?${params.toString()}` as ResolvedPathname;
 	}
 
 	function dayColumnClass(weekend: boolean, holiday: boolean) {
@@ -107,6 +111,12 @@
 					WFH
 				</span>
 				<span class="text-muted-foreground">Approved WFH</span>
+				<span
+					class="inline-flex items-center rounded-full bg-teal-500/10 px-2 py-0.5 font-medium text-teal-700 dark:text-teal-300"
+				>
+					EM
+				</span>
+				<span class="text-muted-foreground">External meeting</span>
 				<span class="bg-muted text-muted-foreground inline-flex items-center gap-1.5 rounded-full px-2 py-0.5">
 					<span class="bg-muted-foreground/40 size-2 rounded-sm"></span>
 					Weekend
@@ -336,13 +346,20 @@
 										{:else if day.weekend}
 											<p class="text-muted-foreground mt-0.5 text-xs">Weekend</p>
 										{/if}
-										{#if cell.wfh || cell.leave || cell.lop}
+										{#if cell.wfh || cell.em || cell.leave || cell.lop}
 											<div class="mt-1.5 flex flex-wrap gap-1.5">
 												{#if cell.wfh}
 													<span
 														class="bg-primary/10 text-primary inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium"
 													>
 														WFH
+													</span>
+												{/if}
+												{#if cell.em}
+													<span
+														class="inline-flex rounded-full bg-teal-500/10 px-2 py-0.5 text-[10px] font-medium text-teal-700 dark:text-teal-300"
+													>
+														EM
 													</span>
 												{/if}
 												{#if cell.leave}
@@ -375,23 +392,24 @@
 			<!-- Desktop: month matrix with sticky employee (ClickUp / Deputy / 7shifts) -->
 			<div class="border-border hidden overflow-hidden rounded-2xl border lg:block">
 				<div class="scroll-x-contain rounded-b-2xl">
-					<table class="min-w-full border-collapse text-left text-sm">
-						<thead class="bg-muted/40">
+					<table class="min-w-full border-separate border-spacing-0 text-left text-sm">
+						<thead class="bg-muted">
 							<tr>
 								<th
-									class="border-border text-foreground sticky left-0 z-20 border-b bg-muted/40 px-4 py-2.5 font-medium shadow-[4px_0_8px_-4px_rgba(0,0,0,0.12)]"
+									class="border-border text-foreground sticky top-0 left-0 z-30 border-b bg-muted px-4 py-2.5 font-medium shadow-[4px_0_8px_-4px_rgba(0,0,0,0.12)]"
 								>
 									Employee
 								</th>
-								<th class="border-border text-muted-foreground border-b px-3 py-2.5 font-medium">
+								<th
+									class="border-border text-muted-foreground sticky top-0 z-20 border-b bg-muted px-3 py-2.5 font-medium"
+								>
 									ID
 								</th>
 								{#each data.dayMeta as day (day.date)}
 									<th
-										class="border-border text-muted-foreground border-b px-1.5 py-2 text-center font-medium {dayColumnClass(
-											day.weekend,
-											day.holiday
-										)}"
+										class="border-border text-muted-foreground sticky top-0 z-20 border-b px-1.5 py-2 text-center font-medium {day.holiday
+											? 'bg-amber-100 dark:bg-amber-950'
+											: 'bg-muted'}"
 										title={day.holiday
 											? day.holidayName || 'Office holiday'
 											: day.weekend
@@ -412,7 +430,7 @@
 							{#each filteredRows as row (row.employee.id)}
 								<tr class="group hover:bg-muted/20">
 									<td
-										class="border-border text-foreground sticky left-0 z-10 border-b bg-background px-4 py-2.5 shadow-[4px_0_8px_-4px_rgba(0,0,0,0.12)] group-hover:bg-muted/20"
+										class="border-border text-foreground sticky left-0 z-10 border-b bg-background px-4 py-2.5 shadow-[4px_0_8px_-4px_rgba(0,0,0,0.12)] group-hover:bg-[color-mix(in_oklch,var(--muted)_20%,var(--background))]"
 									>
 										<div class="flex min-w-48 items-center gap-2.5">
 											<UserAvatar
@@ -429,7 +447,7 @@
 										</div>
 									</td>
 									<td
-										class="border-border text-muted-foreground border-b px-3 py-2.5 whitespace-nowrap"
+										class="border-border text-muted-foreground border-b bg-background px-3 py-2.5 whitespace-nowrap group-hover:bg-[color-mix(in_oklch,var(--muted)_20%,var(--background))]"
 									>
 										{row.employee.employee_id ?? '—'}
 									</td>
@@ -456,6 +474,13 @@
 														WFH
 													</span>
 												{/if}
+												{#if cell.em}
+													<span
+														class="inline-flex rounded-full bg-teal-500/10 px-1.5 py-0.5 text-[9px] font-medium tracking-wide text-teal-700 dark:text-teal-300"
+													>
+														EM
+													</span>
+												{/if}
 												{#if cell.leave}
 													<span
 														class="inline-flex rounded-full bg-sky-500/10 px-1.5 py-0.5 text-[9px] font-medium tracking-wide text-sky-700 dark:text-sky-300"
@@ -471,7 +496,7 @@
 													</span>
 												{/if}
 												<span class="text-muted-foreground text-[11px] whitespace-nowrap tabular-nums">
-													{range ?? (!cell.wfh && !cell.leave && !cell.lop ? '—' : '')}
+													{range ?? (!cell.wfh && !cell.em && !cell.leave && !cell.lop ? '—' : '')}
 												</span>
 											</div>
 										</td>

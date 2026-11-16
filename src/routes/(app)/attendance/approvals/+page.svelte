@@ -11,8 +11,12 @@
 
 	let busyId = $state<string | null>(null);
 
-	const hasPending = $derived(data.pendingLeave.length > 0 || data.pendingWfh.length > 0);
-	const hasHistory = $derived(data.decidedLeave.length > 0 || data.decidedWfh.length > 0);
+	const hasPending = $derived(
+		data.pendingLeave.length > 0 || data.pendingWfh.length > 0 || data.pendingEm.length > 0
+	);
+	const hasHistory = $derived(
+		data.decidedLeave.length > 0 || data.decidedWfh.length > 0 || data.decidedEm.length > 0
+	);
 
 	function enhanceAction(id: string) {
 		return () => {
@@ -61,7 +65,7 @@
 			<CardHeader>
 				<h2 class="text-foreground text-lg font-medium">No approvals needed</h2>
 				<CardDescription>
-					You don’t currently have direct reports with leave or WFH requests.
+					You don’t currently have direct reports with leave, WFH, or EM requests.
 				</CardDescription>
 			</CardHeader>
 		</Card>
@@ -72,7 +76,7 @@
 				<p class="text-muted-foreground text-sm">Waiting for your decision.</p>
 			</div>
 
-			<div class="grid gap-6 lg:grid-cols-2">
+			<div class="grid gap-6 lg:grid-cols-2 xl:grid-cols-3">
 				<Card>
 					<CardHeader>
 						<h3 class="text-foreground text-base font-medium">Leave</h3>
@@ -209,6 +213,78 @@
 						{/if}
 					</CardContent>
 				</Card>
+
+				<Card>
+					<CardHeader>
+						<h3 class="text-foreground text-base font-medium">External meeting</h3>
+						<CardDescription>
+							{data.orgWideApprovals
+								? 'Pending EM across the organization.'
+								: 'Pending EM from your reports.'}
+						</CardDescription>
+					</CardHeader>
+					<CardContent>
+						{#if data.pendingEm.length === 0}
+							<p class="text-muted-foreground text-sm">No pending external meeting requests.</p>
+						{:else}
+							<ul class="flex flex-col gap-3">
+								{#each data.pendingEm as request (request.id)}
+									<li class="border-border rounded-lg border p-3">
+										<p class="text-foreground text-sm font-medium">{request.name}</p>
+										<p class="text-muted-foreground text-xs">
+											{request.email}
+											{#if request.employeeId}
+												· ID {request.employeeId}
+											{/if}
+										</p>
+										<p class="text-foreground mt-2 text-sm">
+											{request.start_date}
+											{#if request.end_date !== request.start_date}
+												→ {request.end_date}
+											{/if}
+											<span class="text-muted-foreground">
+												· {request.day_count} day{request.day_count === 1 ? '' : 's'}
+											</span>
+										</p>
+										<p class="text-muted-foreground mt-1 text-sm">{request.reason}</p>
+										<div class="mt-3 flex flex-wrap gap-2">
+											<form method="POST" action="?/decideEm" use:enhance={enhanceAction(request.id)}>
+												<input type="hidden" name="id" value={request.id} />
+												<input type="hidden" name="decision" value="approved" />
+												<Button type="submit" size="sm" disabled={busyId === request.id}>
+													Approve
+												</Button>
+											</form>
+											<form method="POST" action="?/decideEm" use:enhance={enhanceAction(request.id)}>
+												<input type="hidden" name="id" value={request.id} />
+												<input type="hidden" name="decision" value="rejected" />
+												<Button
+													type="submit"
+													size="sm"
+													variant="outline"
+													disabled={busyId === request.id}
+												>
+													Reject
+												</Button>
+											</form>
+											<form method="POST" action="?/deleteEm" use:enhance={enhanceAction(request.id)}>
+												<input type="hidden" name="id" value={request.id} />
+												<Button
+													type="submit"
+													size="sm"
+													variant="outline"
+													disabled={busyId === request.id}
+												>
+													Delete
+												</Button>
+											</form>
+										</div>
+									</li>
+								{/each}
+							</ul>
+						{/if}
+					</CardContent>
+				</Card>
 			</div>
 		</section>
 
@@ -227,7 +303,7 @@
 					</CardContent>
 				</Card>
 			{:else}
-				<div class="grid gap-6 lg:grid-cols-2">
+				<div class="grid gap-6 lg:grid-cols-2 xl:grid-cols-3">
 					<Card>
 						<CardHeader>
 							<h3 class="text-foreground text-base font-medium">Leave history</h3>
@@ -389,6 +465,100 @@
 												<form
 													method="POST"
 													action="?/deleteWfh"
+													use:enhance={enhanceAction(request.id)}
+												>
+													<input type="hidden" name="id" value={request.id} />
+													<Button
+														type="submit"
+														size="sm"
+														variant="outline"
+														disabled={busyId === request.id}
+													>
+														Delete
+													</Button>
+												</form>
+											</div>
+										</li>
+									{/each}
+								</ul>
+							{/if}
+						</CardContent>
+					</Card>
+
+					<Card>
+						<CardHeader>
+							<h3 class="text-foreground text-base font-medium">EM history</h3>
+							<CardDescription>External meetings you have already decided.</CardDescription>
+						</CardHeader>
+						<CardContent>
+							{#if data.decidedEm.length === 0}
+								<p class="text-muted-foreground text-sm">No decided external meetings yet.</p>
+							{:else}
+								<ul class="flex flex-col gap-3">
+									{#each data.decidedEm as request (request.id)}
+										<li class="border-border rounded-lg border p-3">
+											<div class="flex items-start justify-between gap-3">
+												<div class="min-w-0">
+													<p class="text-foreground text-sm font-medium">{request.name}</p>
+													<p class="text-muted-foreground text-xs">
+														{request.email}
+														{#if request.employeeId}
+															· ID {request.employeeId}
+														{/if}
+													</p>
+												</div>
+												<RequestStatusBadge status={request.status} />
+											</div>
+											<p class="text-foreground mt-2 text-sm">
+												{request.start_date}
+												{#if request.end_date !== request.start_date}
+													→ {request.end_date}
+												{/if}
+												<span class="text-muted-foreground">
+													· {request.day_count} day{request.day_count === 1 ? '' : 's'}
+												</span>
+											</p>
+											<p class="text-muted-foreground mt-1 text-sm">{request.reason}</p>
+											{#if request.decided_at}
+												<p class="text-muted-foreground mt-1 text-xs">
+													Decided {new Date(request.decided_at).toLocaleString('en-IN')}
+												</p>
+											{/if}
+											<div class="mt-3 flex flex-wrap gap-2">
+												{#if request.status !== 'approved'}
+													<form
+														method="POST"
+														action="?/reviseEm"
+														use:enhance={enhanceAction(request.id)}
+													>
+														<input type="hidden" name="id" value={request.id} />
+														<input type="hidden" name="decision" value="approved" />
+														<Button type="submit" size="sm" disabled={busyId === request.id}>
+															Change to approved
+														</Button>
+													</form>
+												{/if}
+												{#if request.status !== 'rejected'}
+													<form
+														method="POST"
+														action="?/reviseEm"
+														use:enhance={enhanceAction(request.id)}
+													>
+														<input type="hidden" name="id" value={request.id} />
+														<input type="hidden" name="decision" value="rejected" />
+														<Button
+															type="submit"
+															size="sm"
+															variant="outline"
+															disabled={busyId === request.id}
+														>
+															Change to rejected
+														</Button>
+													</form>
+												{/if}
+												<form
+													method="POST"
+													action="?/deleteEm"
 													use:enhance={enhanceAction(request.id)}
 												>
 													<input type="hidden" name="id" value={request.id} />

@@ -7,6 +7,7 @@
 	import { Button } from '#lib/components/ui/button';
 	import DateInput from '#lib/components/ui/date-input.svelte';
 	import TimeInput from '#lib/components/ui/time-input.svelte';
+	import BriefcaseBusiness from '@lucide/svelte/icons/briefcase-business';
 	import CalendarDays from '@lucide/svelte/icons/calendar-days';
 	import ChevronLeft from '@lucide/svelte/icons/chevron-left';
 	import ChevronRight from '@lucide/svelte/icons/chevron-right';
@@ -106,11 +107,11 @@
 	<div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between lg:gap-6">
 		<div class="flex min-w-0 flex-col gap-1">
 			<p class="text-muted-foreground text-sm leading-relaxed">
-				Track your day, leave, and WFH.
+				Track your day, leave, WFH, and external meetings.
 			</p>
 			{#if !data.profile.reports_to}
 				<p class="text-muted-foreground text-xs">
-					No reporting lead is mapped — leave and WFH are captured immediately.
+					No reporting lead is mapped — leave, WFH, and EM are captured immediately.
 				</p>
 			{/if}
 		</div>
@@ -131,6 +132,14 @@
 			>
 				<House class="size-4" />
 				WFH request
+			</Button>
+			<Button
+				href={resolve('/(app)/attendance/em')}
+				variant="outline"
+				class="h-11 w-full rounded-xl sm:h-10 sm:w-auto"
+			>
+				<BriefcaseBusiness class="size-4" />
+				External meeting
 			</Button>
 			{#if data.isManager || data.pendingApprovals > 0}
 				<Button
@@ -528,6 +537,47 @@
 						<li class="flex items-start justify-between gap-3 px-3.5 py-3.5">
 							<div class="min-w-0">
 								<p class="text-foreground text-sm font-medium">{formatListDate(request.work_date)}</p>
+								<p class="text-muted-foreground mt-0.5 truncate text-xs">
+									{request.reason || 'No reason noted'}
+								</p>
+							</div>
+							<RequestStatusBadge status={request.status} class="rounded-full" />
+						</li>
+					{/each}
+				</ul>
+			{/if}
+		</section>
+
+		<section class="flex flex-col gap-3">
+			<div class="flex items-baseline justify-between gap-3 px-0.5">
+				<div>
+					<h2 class="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+						Recent external meetings
+					</h2>
+					<p class="text-muted-foreground mt-0.5 text-xs">Your latest EM marks.</p>
+				</div>
+				<Button href={resolve('/(app)/attendance/em')} variant="outline" size="sm" class="rounded-xl">
+					View all
+				</Button>
+			</div>
+
+			{#if data.emRequests.length === 0}
+				<div
+					class="border-border bg-muted/20 text-muted-foreground rounded-2xl border border-dashed px-4 py-8 text-center text-sm"
+				>
+					No external meeting requests yet.
+				</div>
+			{:else}
+				<ul class="border-border divide-border overflow-hidden rounded-2xl border divide-y">
+					{#each data.emRequests as request (request.id)}
+						<li class="flex items-start justify-between gap-3 px-3.5 py-3.5">
+							<div class="min-w-0">
+								<p class="text-foreground text-sm font-medium">
+									{formatListDate(request.start_date)}
+									{#if request.end_date !== request.start_date}
+										→ {formatListDate(request.end_date)}
+									{/if}
+								</p>
 								<p class="text-muted-foreground mt-0.5 truncate text-xs">
 									{request.reason || 'No reason noted'}
 								</p>
